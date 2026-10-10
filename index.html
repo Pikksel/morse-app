@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Morse Daily</title>
+  <meta name="description" content="A daily Morse code word game with a callsign leaderboard.">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/ui.js"></script>
+</head>
+<body>
+  <main>
+
+    <!-- Start: claim a callsign -->
+    <section id="start" hidden>
+      <h1>Morse Daily</h1>
+      <p class="morse" aria-hidden="true">-- --- .-. ... .</p>
+      <p>Hear one word in Morse code each day. Guess it in six tries.</p>
+
+      <form id="claim-form" class="card">
+        <label for="claim-name">Pick your callsign</label>
+        <div class="row">
+          <input id="claim-name" class="callsign" autocomplete="off" spellcheck="false"
+                 maxlength="4" placeholder="SM5X" required>
+          <button type="submit">Claim</button>
+        </div>
+        <p class="hint">1–4 letters or digits. First come, first served.</p>
+        <p id="claim-error" class="error" role="alert"></p>
+      </form>
+
+      <details class="card">
+        <summary>Have a recovery code?</summary>
+        <form id="restore-form">
+          <label for="restore-name">Callsign</label>
+          <input id="restore-name" class="callsign" autocomplete="off" maxlength="4" required>
+          <label for="restore-code">Recovery code</label>
+          <input id="restore-code" autocomplete="off" spellcheck="false" required>
+          <button type="submit">Restore</button>
+          <p id="restore-error" class="error" role="alert"></p>
+        </form>
+      </details>
+    </section>
+
+    <!-- After claiming: show recovery code once -->
+    <section id="saved" hidden>
+      <h1>73, <span id="saved-name"></span>!</h1>
+      <p>Your callsign is yours. Save this recovery code to play on another device.
+         It is shown <strong>only once</strong>.</p>
+      <code id="saved-code" class="code"></code>
+      <div class="row">
+        <button id="copy-code" type="button" class="secondary">Copy code</button>
+        <button id="continue" type="button">Start playing</button>
+      </div>
+    </section>
+
+    <!-- Game: built in step 3 -->
+    <section id="game" hidden>
+      <header class="bar">
+        <strong>Morse Daily</strong>
+        <span class="badge" id="player-name"></span>
+      </header>
+      <p class="hint">The game arrives in step 3.</p>
+      <button id="sign-out" type="button" class="link">Not you?</button>
+    </section>
+
+  </main>
+</body>
+</html>
