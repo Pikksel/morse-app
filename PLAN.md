@@ -53,8 +53,9 @@ Open http://localhost:8000. If you see a MIME error after a server change, use D
 - [x] Restore with recovery code works
 
 ### 2.5 Git + GitHub
-- [ ] `git init`, first commit
-- [ ] Create GitHub repo, push
+- [x] `git init`, first commit
+- [x] Create GitHub repo, push: https://github.com/Pikksel/morse-app
+- [x] Re-add MIT LICENSE (lost to a force-push of the first commit)
 - [ ] Clone on second PC
 
 ### 3. Game core
