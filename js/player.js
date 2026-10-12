@@ -1,4 +1,4 @@
-// The claimed name + secret token, kept in this browser only.
+// The logged-in callsign + this device's session token.
 const KEY = 'morse-web:player';
 
 export function loadPlayer() {
@@ -24,3 +24,4 @@ export function clearPlayer() {
 }
 
 export const NAME_PATTERN = /^[A-Z0-9]{1,4}$/;
+export const PASSWORD_PATTERN = /^[.-]{4}$/;

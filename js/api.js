@@ -13,8 +13,16 @@ async function rpc(fn, args = {}) {
   return data;
 }
 
-export const claimName = (name) =>
-  rpc('claim_name', { p_name: name });
+// password: 4 symbols of '.' or '-'. Returns a session token.
+export const register = (name, password) =>
+  rpc('register', { p_name: name, p_password: password });
+
+// Returns { token } or { error: 'BAD_LOGIN' | 'LOCKED', retry_after_s }.
+export const login = (name, password) =>
+  rpc('login', { p_name: name, p_password: password });
+
+export const logout = (name, token) =>
+  rpc('logout', { p_name: name, p_token: token });
 
 export const verifyPlayer = (name, token) =>
   rpc('verify_player', { p_name: name, p_token: token });

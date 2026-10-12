@@ -6,61 +6,74 @@
   <title>Morse Daily</title>
   <meta name="description" content="A daily Morse code word game with a callsign leaderboard.">
   <link rel="stylesheet" href="style.css">
+  <script async src="https://fkurz.net/ham/jscwlib/releases/jscwlib-0.3.0.js"></script>
   <script type="module" src="js/ui.js"></script>
 </head>
 <body>
   <main>
 
-    <!-- Start: claim a callsign -->
+    <!-- Start: new player / log in -->
     <section id="start" hidden>
       <h1>Morse Daily</h1>
       <p class="morse" aria-hidden="true">-- --- .-. ... .</p>
-      <p>Hear one word in Morse code each day. Guess it in six tries.</p>
+      <p>Hear one word in Morse code each day. Guess it in 21 tries.</p>
 
-      <form id="claim-form" class="card">
-        <label for="claim-name">Pick your callsign</label>
-        <div class="row">
-          <input id="claim-name" class="callsign" autocomplete="off" spellcheck="false"
-                 maxlength="4" placeholder="SM5X" required>
-          <button type="submit">Claim</button>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-new" aria-selected="true">New player</button>
+        <button type="button" role="tab" id="tab-login" aria-selected="false">Log in</button>
+      </div>
+
+      <form id="auth-form" class="card" novalidate>
+        <label for="auth-name">Callsign</label>
+        <input id="auth-name" class="callsign" autocomplete="username" spellcheck="false"
+               maxlength="4" placeholder="SM5X" required>
+        <p class="hint" id="name-hint">1–4 letters or digits. First come, first served.</p>
+
+        <label id="pw-label">Morse password</label>
+        <div id="pw-slots" class="pw-slots" aria-labelledby="pw-label" aria-live="polite"></div>
+        <div class="pw-pad">
+          <button type="button" class="secondary" data-sym="." aria-label="Dit">•</button>
+          <button type="button" class="secondary" data-sym="-" aria-label="Dah">—</button>
+          <button type="button" class="secondary" data-sym="back" aria-label="Delete">⌫</button>
         </div>
-        <p class="hint">1–4 letters or digits. First come, first served.</p>
-        <p id="claim-error" class="error" role="alert"></p>
-      </form>
+        <p class="hint" id="pw-hint">4 dits or dahs. Remember it to log in on other devices.</p>
 
-      <details class="card">
-        <summary>Have a recovery code?</summary>
-        <form id="restore-form">
-          <label for="restore-name">Callsign</label>
-          <input id="restore-name" class="callsign" autocomplete="off" maxlength="4" required>
-          <label for="restore-code">Recovery code</label>
-          <input id="restore-code" autocomplete="off" spellcheck="false" required>
-          <button type="submit">Restore</button>
-          <p id="restore-error" class="error" role="alert"></p>
-        </form>
-      </details>
+        <button type="submit" id="auth-submit">Create callsign</button>
+        <p id="auth-error" class="error" role="alert"></p>
+      </form>
     </section>
 
-    <!-- After claiming: show recovery code once -->
+    <!-- After registering: confirm the password -->
     <section id="saved" hidden>
       <h1>73, <span id="saved-name"></span>!</h1>
-      <p>Your callsign is yours. Save this recovery code to play on another device.
-         It is shown <strong>only once</strong>.</p>
-      <code id="saved-code" class="code"></code>
-      <div class="row">
-        <button id="copy-code" type="button" class="secondary">Copy code</button>
-        <button id="continue" type="button">Start playing</button>
-      </div>
+      <p>Your callsign is yours. Log in on other devices with your Morse password:</p>
+      <p id="saved-pw" class="pw-show"></p>
+      <p class="hint">Write it down. It can't be recovered.</p>
+      <button id="continue" type="button">Start playing</button>
     </section>
 
-    <!-- Game: built in step 3 -->
+    <!-- Game -->
     <section id="game" hidden>
       <header class="bar">
         <strong>Morse Daily</strong>
-        <span class="badge" id="player-name"></span>
+        <button id="sign-out" type="button" class="badge" title="Log out">
+          <span id="player-name"></span>
+        </button>
       </header>
-      <p class="hint">The game arrives in step 3.</p>
-      <button id="sign-out" type="button" class="link">Not you?</button>
+
+      <div class="status">
+        <span id="try-count"></span>
+        <span id="try-wpm"></span>
+        <span id="timer" aria-label="Time">0:00</span>
+      </div>
+      <div id="meter" class="meter" aria-hidden="true"></div>
+
+      <div id="word" class="word" aria-label="Your guess" aria-live="polite"></div>
+      <p id="message" class="message" role="status"></p>
+      <button id="play" type="button" class="play"></button>
+
+      <ol id="history" class="history" aria-label="Previous guesses"></ol>
+      <div id="keyboard" class="keyboard"></div>
     </section>
 
   </main>

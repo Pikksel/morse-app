@@ -7,6 +7,9 @@
   --accent-text: #ffffff;
   --border: #ddd8cc;
   --error: #c0392b;
+  --correct: #4a9d5b;
+  --absent: #7c7f84;
+  --key: #e4dfd3;
   --radius: 10px;
   --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
@@ -21,6 +24,9 @@
     --accent-text: #15171a;
     --border: #33373c;
     --error: #ff6b5b;
+    --correct: #3f8a4f;
+    --absent: #2b2e32;
+    --key: #50555c;
   }
 }
 
@@ -36,7 +42,7 @@ body {
 main {
   max-width: 480px;
   margin: 0 auto;
-  padding: 32px 16px;
+  padding: 16px;
 }
 
 section > * + * { margin-top: 16px; }
@@ -113,15 +119,64 @@ button.link {
 .hint { color: var(--muted); font-size: 0.875rem; margin: 0; }
 .error { color: var(--error); font-size: 0.875rem; margin: 0; min-height: 1.3em; }
 
-.code {
-  display: block;
-  padding: 12px;
-  font-family: var(--mono);
-  word-break: break-all;
+/* ---------- Start: tabs + Morse password ---------- */
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
   background: var(--surface);
-  border: 1px dashed var(--accent);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  user-select: all;
+}
+.tabs button {
+  color: var(--muted);
+  background: none;
+}
+.tabs button[aria-selected="true"] {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.pw-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.pw-slot {
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+}
+.pw-slot.filled { border-color: var(--muted); }
+.pw-slot.next { border-color: var(--accent); }
+
+.pw-pad {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 8px;
+}
+.pw-pad button {
+  height: 56px;
+  font-size: 2rem;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+.pw-show {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-align: center;
+  color: var(--accent);
+  margin: 8px 0;
 }
 
 .bar {
@@ -139,6 +194,193 @@ button.link {
   border: 1px solid var(--accent);
   border-radius: 999px;
   color: var(--accent);
+}
+
+/* ---------- Game (mobile first) ---------- */
+
+button.badge {
+  font: inherit;
+  font-family: var(--mono);
+  letter-spacing: 0.15em;
+  padding: 2px 10px;
+  background: none;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
+
+#game:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 32px);
+}
+#game > * + * { margin-top: 12px; }
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+#try-count { color: var(--text); font-weight: 700; }
+
+/* 21 dots in 7 speed groups of 3 */
+.meter {
+  display: grid;
+  grid-template-columns: repeat(21, 1fr);
+  column-gap: 3px;
+}
+.dot {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.dot:nth-child(3n):not(:last-child) { margin-right: 5px; }
+.dot.used { background: var(--muted); }
+.dot.current { background: var(--accent); }
+
+.word {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  width: min(100%, 340px);
+  margin-inline: auto;
+  padding-top: 8px;
+}
+
+.square {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: clamp(1.8rem, 9vw, 2.4rem);
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+}
+.square.filled  { border-color: var(--muted); }
+.square.correct { background: var(--correct); border-color: var(--correct); color: #fff; }
+.square.wrong   { background: var(--absent); border-color: var(--absent); color: #fff; }
+
+/* Where the next typed letter goes (tap a square to move it) */
+.square.cursor {
+  border-color: var(--text);
+  box-shadow: inset 0 -5px 0 var(--accent);
+  cursor: pointer;
+}
+.square.correct { cursor: default; }
+
+/* The square whose letter is being played */
+.square { transition: transform 0.08s, box-shadow 0.08s; }
+.square.sounding {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent), 0 0 18px var(--accent);
+  transform: scale(1.08);
+}
+
+.flip { animation: flip 0.45s ease both; }
+@keyframes flip {
+  0%   { transform: rotateX(0); }
+  50%  { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+.shake { animation: shake 0.35s; }
+@keyframes shake {
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+
+.message {
+  margin-bottom: 0;
+  min-height: 1.5em;
+  text-align: center;
+  font-weight: 600;
+}
+
+.play {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.2rem;
+}
+.play small { font-weight: 400; opacity: 0.8; margin-left: 6px; }
+
+.history {
+  list-style: none;
+  margin-bottom: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  max-height: 22vh;
+  overflow-y: auto;
+}
+.history li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.h-try, .h-wpm { width: 4.5em; white-space: nowrap; }
+.h-try { text-align: right; margin-right: 6px; }
+.h-wpm { margin-left: 6px; }
+.h-wpm::after { content: ' wpm'; }
+.mini {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.mini.correct { background: var(--correct); border-color: var(--correct); color: #fff; }
+
+/* Keyboard pinned to the bottom */
+.keyboard {
+  margin-top: auto !important;
+  padding-top: 12px;
+  display: grid;
+  gap: 6px;
+  user-select: none;
+  touch-action: manipulation;
+}
+.keyboard.disabled { opacity: 0.4; pointer-events: none; }
+
+.kb-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.key {
+  flex: 1;
+  max-width: 44px;
+  height: 58px;
+  padding: 0;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  color: var(--text);
+  background: var(--key);
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.key small {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+.key.wide { max-width: 66px; flex: 1.5; font-size: 0.8rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flip, .shake { animation: none; }
 }
 
 [hidden] { display: none !important; }

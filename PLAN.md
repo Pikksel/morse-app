@@ -13,10 +13,13 @@
 - Backend: Supabase (Postgres + RPC functions). The browser calls them with `fetch` through `js/api.js`.
 - Hosting: GitHub Pages
 
-## How names work (no login)
-- `claim_name` → the name is `UNIQUE` in the DB. On success the server returns a secret token, and the DB stores only its hash.
-- The token is saved in localStorage and shown once as a **recovery code**.
-- Every score submission sends the token, so nobody else can post as your name.
+## How players work (callsign + Morse password)
+- **New player:** `register(callsign, password)`. The callsign is `UNIQUE`; the password is 4 dits/dahs (e.g. `.-.-`), stored as a bcrypt hash.
+- **Log in:** `login(callsign, password)` from any device.
+- Both return a **session token** (only its hash is stored in `sessions`). One player can be logged in on several devices.
+- The token is kept in localStorage. Every score submission sends it, so nobody else can post as your callsign.
+- 4 dits/dahs = only 16 combinations, so **5 wrong logins lock the callsign for 15 minutes**.
+- Log out (tap your callsign badge) deletes this device's session.
 
 ## Run locally
 From inside `Morse-web/` (the plain `python -m http.server` serves .js as text/plain on Windows):
@@ -34,6 +37,10 @@ Open http://localhost:8000. If you see a MIME error after a server change, use D
 | `js/api.js` | `rpc()` helper + claimName, verifyPlayer, submitScore, leaderboards |
 | `js/player.js` | localStorage for name + token |
 | `js/ui.js` | Screen logic (entry point) |
+| `js/words.js` | Daily answer list (add new words at the END only) |
+| `js/game.js` | Pure game logic: daily word, evaluate guess, saved state, timer math |
+| `js/morse.js` | jscwlib wrapper (play at a given WPM) + Morse table |
+| `js/gameView.js` | Game screen: squares, tries meter, Play button, history, keyboard |
 | `supabase/schema.sql` | Tables, RLS, RPC functions. Run once in the Supabase SQL Editor. |
 
 ---
@@ -58,14 +65,38 @@ Open http://localhost:8000. If you see a MIME error after a server change, use D
 - [x] Re-add MIT LICENSE (lost to a force-push of the first commit)
 - [ ] Clone on second PC
 
-### 3. Game core
-- [ ] `js/words.js`: answer list + valid-guess list (5 letters)
-- [ ] Daily word: same for everyone, changes 00:00 UTC
-- [ ] `js/morse.js`: jscwlib wrapper (play, replay, WPM slider)
-- [ ] 6×5 tile grid, Wordle colors (correct / present / absent)
-- [ ] On-screen keyboard with Morse patterns + physical keyboard input
-- [ ] Timer starts on first Play
-- [ ] Board state saved in localStorage (refresh keeps progress)
+### 2.6 Login with Morse password (2026-10-12)
+- [x] `supabase/migrations/002_morse_password.sql`: password hash, lockout, sessions, `register` / `login` / `logout`
+- [x] `schema.sql` updated to the same state (fresh setup)
+- [x] Start screen: tabs *New player* / *Log in*, callsign + 4-slot password with • / — pad (beeps), keyboard `.` `-`
+- [x] After registering: shows the password to write down
+- [x] Session check on load (logged out elsewhere → back to Log in)
+- [x] jscwlib loads `async` so the page doesn't wait for fkurz.net
+- [x] Ran `002_morse_password.sql` in Supabase
+- [x] Test: register + log out (works)
+- [ ] Test: log in on another browser / private window
+- [ ] Test: wrong password ×5 → "Too many wrong tries"
+
+### 3. Game core (redesigned 2026-10-10: morsle rules, mobile first)
+Rules: 21 tries. Each Play = 1 try = 1 guess. Speed 40 WPM, −5 every 3 tries, down to 10.
+Guessing again without Play ("blind guess") also costs a try. Keyboard stays active after the first Play.
+Blanks allowed. Correct letters turn green and stay locked; no other hints.
+Score = tries used (1–21), 22 = failed; tie-break on time.
+- [x] `js/words.js`: 250 answers
+- [x] Daily word: same for everyone, changes 00:00 UTC
+- [x] `js/game.js`: tries, WPM schedule, green-only evaluation, saved state (tested in Node)
+- [x] `js/morse.js`: jscwlib wrapper (play at given WPM)
+- [ ] **User: confirm sound is heard** on PC + phone
+- [x] Mobile layout: 5 squares, 21-dot tries meter, big Play button, guess history, keyboard pinned at bottom
+- [x] Play disabled while the current try's sound plays; after guessing, Play starts the next try
+- [x] Green letters locked (can't select, type over or delete)
+- [x] Last guess carries over to the next try; wrong letters stay gray until typed over
+- [x] Tap a square (or ← →) to choose where the next letter goes; orange underline = cursor
+- [x] Keyboard never grays out after a guess; player chooses Play (listen) or Guess (blind), both cost a try
+- [x] Timer starts on first Play; refresh keeps progress
+- [x] 0.4 s lead-in before the sound (audio devices waking up cut off the first letter)
+- [x] Square highlights while its letter's Morse is playing (jscwlib `onCharacterPlay`)
+- [x] Ran `supabase/migrations/001_21_tries.sql` in Supabase (score range 1–22, verified)
 
 ### 4. Scores + leaderboard
 - [ ] Submit score on finish (`submit_score`)
@@ -89,3 +120,5 @@ Open http://localhost:8000. If you see a MIME error after a server change, use D
 ## Known limitations / later ideas
 - The daily word and scoring run in the browser, so a determined cheater could fake a score. Fix later: validate guesses on the server in a Supabase Edge Function.
 - Lost recovery code means the name is lost.
+- Any 5 letters count as a guess. Later: add a valid-word list so random letter combos are rejected.
+- jscwlib is hotlinked from fkurz.net. Later: vendor a copy into `js/vendor/` so the game doesn't depend on that site.
