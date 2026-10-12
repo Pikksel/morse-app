@@ -3,7 +3,9 @@ import {
   WORD_LENGTH, MAX_TRIES, BLANK, dailyWord, wpmForTry, evaluate, knownLetters,
   loadState, saveState, useTry, addGuess, elapsedMs, formatTime,
 } from './game.js';
-import { MORSE, play, stop } from './morse.js';
+import { MORSE, play, stop, tone } from './morse.js';
+import { playSfx } from './sfx.js';
+import { confetti } from './confetti.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -237,6 +239,7 @@ function handleKey(key) {
 
   if (/^[A-Z]$/.test(key)) {
     setSlot(cursor, key);
+    if (!playing) tone(key); // hear the letter you typed (never over the word itself)
     const next = step(cursor, 1);
     if (next !== -1) { cursor = next; inPlace = false; }
     else inPlace = true; // last free square: stay, Backspace clears it
@@ -312,6 +315,17 @@ function finish(restored = false) {
   message(state.status === 'won'
     ? `Solved on try ${state.tries}/${MAX_TRIES} in ${formatTime(elapsedMs(state))}`
     : `Out of tries. The word was ${answer}.`);
+
+  // Celebrate only the moment it happens, not when reopening a finished game.
+  if (!restored) {
+    if (state.status === 'won') {
+      playSfx('win');
+      const r = $('word').getBoundingClientRect();
+      confetti({ origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
+    } else {
+      playSfx('fail');
+    }
+  }
   onGameOver(state, restored);
 }
 
@@ -341,6 +355,8 @@ function wireEvents() {
     }
   });
 }
+
+export const currentState = () => state;
 
 export function initGame({ onFinish } = {}) {
   if (onFinish) onGameOver = onFinish;

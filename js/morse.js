@@ -29,17 +29,20 @@ export function play(text, wpm, onDone, onLetter = () => {}) {
   player.play(text);
 }
 
-// Short feedback beep for one symbol: '.' = dit, '-' = dah. No lead-in, so it feels instant.
-export function beep(symbol) {
-  getPlayer(20);
-  if (player.init_done) player.stop(); // fast taps: cut the previous beep (stop() fails before the first play)
+// Short feedback sound, e.g. one letter. No lead-in, so it feels instant.
+export function tone(text, wpm = 20) {
+  getPlayer(wpm);
+  if (player.init_done) player.stop(); // fast taps: cut the previous one (stop() fails before the first play)
   player.startDelay = 0;
   playId++;
-  player.setWpm(20);
+  player.setWpm(wpm);
   player.onFinished = null;
   player.onCharacterPlay = () => {};
-  player.play(symbol === '.' ? 'E' : 'T');
+  player.play(text);
 }
+
+// One password symbol: '.' = dit (E), '-' = dah (T).
+export const beep = (symbol) => tone(symbol === '.' ? 'E' : 'T');
 
 export function stop() {
   playId++;

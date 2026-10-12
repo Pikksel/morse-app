@@ -40,6 +40,9 @@ Open http://localhost:8000. If you see a MIME error after a server change, use D
 | `js/words.js` | Daily answer list (add new words at the END only) |
 | `js/game.js` | Pure game logic: daily word, evaluate guess, saved state, timer math |
 | `js/morse.js` | jscwlib wrapper (play at a given WPM) + Morse table |
+| `js/results.js` | Results popup + leaderboards + next-word countdown |
+| `js/sfx.js` | Win / fail sound effects (`sounds/*.mp3`) |
+| `js/confetti.js` | Canvas confetti burst on a win |
 | `js/gameView.js` | Game screen: squares, tries meter, Play button, history, keyboard |
 | `supabase/schema.sql` | Tables, RLS, RPC functions. Run once in the Supabase SQL Editor. |
 
@@ -74,8 +77,8 @@ Open http://localhost:8000. If you see a MIME error after a server change, use D
 - [x] jscwlib loads `async` so the page doesn't wait for fkurz.net
 - [x] Ran `002_morse_password.sql` in Supabase
 - [x] Test: register + log out (works)
-- [ ] Test: log in on another browser / private window
-- [ ] Test: wrong password ×5 → "Too many wrong tries"
+- [x] Test: log in on another browser / private window
+- [x] Test: wrong password ×5 → "Too many wrong tries"
 
 ### 3. Game core (redesigned 2026-10-10: morsle rules, mobile first)
 Rules: 21 tries. Each Play = 1 try = 1 guess. Speed 40 WPM, −5 every 3 tries, down to 10.
@@ -86,7 +89,8 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [x] Daily word: same for everyone, changes 00:00 UTC
 - [x] `js/game.js`: tries, WPM schedule, green-only evaluation, saved state (tested in Node)
 - [x] `js/morse.js`: jscwlib wrapper (play at given WPM)
-- [ ] **User: confirm sound is heard** on PC + phone
+- [x] Sound confirmed on PC (phone: see step 5)
+- [x] Typing a letter plays its Morse once (20 WPM), but not while the word itself is playing
 - [x] Mobile layout: 5 squares, 21-dot tries meter, big Play button, guess history, keyboard pinned at bottom
 - [x] Play disabled while the current try's sound plays; after guessing, Play starts the next try
 - [x] Green letters locked (can't select, type over or delete)
@@ -99,11 +103,20 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [x] Ran `supabase/migrations/001_21_tries.sql` in Supabase (score range 1–22, verified)
 
 ### 4. Scores + leaderboard
-- [ ] Submit score on finish (`submit_score`)
-- [ ] Results modal: result, time, your rank
-- [ ] Today's Top 10 + All-time tab
-- [ ] Already played today → open results directly
-- [ ] 🏆 button in header opens the leaderboard
+- [x] Submit score on finish (`submit_score`), once per day (`submitted` flag in saved state; retries if offline)
+- [x] Results popup (`js/results.js`, `<dialog>`): answer + its Morse, tries, time, rank today
+- [x] Today's Top 10 + All-time tab (3+ games, miss = 22), own row highlighted
+- [x] Countdown to the next word (00:00 UTC)
+- [x] Already played today → results open directly
+- [x] 🏆 button in header opens the leaderboard (no answer shown mid-game)
+- [x] Tested with faked server responses (temp test page, deleted)
+- [ ] **User: test with the real database** (finish a game, see your row; second browser shows it too)
+
+### 4.5 Win / fail effects (2026-10-12)
+- [x] `sounds/win.mp3` on solve, `sounds/fail.mp3` when out of tries (`js/sfx.js`)
+- [x] Confetti burst from the squares on a win (`js/confetti.js`, own canvas code, respects reduced motion)
+- [x] Effects only play at the moment it happens, not when reopening a finished game
+- [x] Results popup waits 2.2 s on a win so the confetti is visible
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

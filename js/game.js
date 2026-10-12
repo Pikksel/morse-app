@@ -54,6 +54,8 @@ function newState(day) {
     status: 'playing', // 'playing' | 'won' | 'lost'
     startedAt: null,
     finishedAt: null,
+    submitted: false,  // score saved on the server (or can't be: other device / day over)
+    rank: null,        // rank today, from submit_score
   };
 }
 

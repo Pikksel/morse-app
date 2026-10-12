@@ -56,9 +56,12 @@
     <section id="game" hidden>
       <header class="bar">
         <strong>Morse Daily</strong>
-        <button id="sign-out" type="button" class="badge" title="Log out">
-          <span id="player-name"></span>
-        </button>
+        <div class="bar-actions">
+          <button id="open-board" type="button" class="icon-btn" aria-label="Leaderboard" title="Leaderboard">🏆</button>
+          <button id="sign-out" type="button" class="badge" title="Log out">
+            <span id="player-name"></span>
+          </button>
+        </div>
       </header>
 
       <div class="status">
@@ -77,5 +80,35 @@
     </section>
 
   </main>
+
+  <!-- Results + leaderboard -->
+  <dialog id="results" class="dialog" aria-labelledby="results-title">
+    <button id="results-close" type="button" class="icon-btn dialog-close" aria-label="Close">✕</button>
+
+    <div id="result-summary">
+      <h2 id="results-title"></h2>
+      <p id="result-word" class="result-word"></p>
+      <p id="result-morse" class="result-morse"></p>
+      <div class="stats">
+        <div><b id="stat-tries"></b><span>Tries</span></div>
+        <div><b id="stat-time"></b><span>Time</span></div>
+        <div><b id="stat-rank"></b><span>Rank today</span></div>
+      </div>
+      <p id="result-status" class="hint" role="status"></p>
+    </div>
+
+    <h2 id="board-title" class="board-title">Leaderboard</h2>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="board-today" aria-selected="true">Today</button>
+      <button type="button" role="tab" id="board-alltime" aria-selected="false">All-time</button>
+    </div>
+    <table class="board">
+      <thead id="board-head"></thead>
+      <tbody id="board-body"></tbody>
+    </table>
+    <p id="board-note" class="hint"></p>
+
+    <p class="countdown">Next word in <b id="countdown"></b></p>
+  </dialog>
 </body>
 </html>

@@ -196,6 +196,101 @@ button.link {
   color: var(--accent);
 }
 
+/* ---------- Header actions ---------- */
+
+.bar-actions { display: flex; align-items: center; gap: 8px; }
+
+button.icon-btn {
+  padding: 4px 8px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--text);
+  background: none;
+}
+
+/* ---------- Results dialog ---------- */
+
+.dialog {
+  width: min(100% - 32px, 440px);
+  max-height: 88dvh;
+  padding: 20px 16px 16px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow-y: auto;
+}
+.dialog::backdrop { background: rgb(0 0 0 / 0.6); }
+.dialog h2 { margin: 0; text-align: center; font-size: 1.5rem; }
+.dialog > * + * { margin-top: 12px; }
+#result-summary > * + * { margin-top: 10px; }
+
+.dialog-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.result-word {
+  margin-bottom: 0;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--correct);
+}
+.result-morse {
+  margin-top: 0;
+  text-align: center;
+  font-family: var(--mono);
+  color: var(--accent);
+  white-space: pre-wrap;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+.stats div {
+  display: grid;
+  padding: 8px 4px;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.stats b { font-size: 1.4rem; font-family: var(--mono); }
+.stats span { font-size: 0.75rem; color: var(--muted); }
+
+.board-title { padding-right: 32px; }
+
+.board {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+}
+.board th {
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.board td { padding: 6px; border-bottom: 1px solid var(--border); }
+.board td:first-child, .board th:first-child { width: 2.5em; color: var(--muted); }
+.board tr.me td { color: var(--accent); font-weight: 700; }
+
+.countdown {
+  margin-bottom: 0;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.countdown b { font-family: var(--mono); color: var(--text); }
+
 /* ---------- Game (mobile first) ---------- */
 
 button.badge {
@@ -381,6 +476,15 @@ button.badge {
 
 @media (prefers-reduced-motion: reduce) {
   .flip, .shake { animation: none; }
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 [hidden] { display: none !important; }

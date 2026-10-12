@@ -1,6 +1,8 @@
-import { register, login, logout, verifyPlayer } from './api.js';
+import { register, login, logout, verifyPlayer, submitScore } from './api.js';
 import { loadPlayer, savePlayer, clearPlayer, NAME_PATTERN, PASSWORD_PATTERN } from './player.js';
-import { initGame } from './gameView.js';
+import { initGame, currentState } from './gameView.js';
+import { saveState, score, elapsedMs } from './game.js';
+import { openResults, refreshResults, setStatus } from './results.js';
 import { beep } from './morse.js';
 
 const $ = (id) => document.getElementById(id);
@@ -133,8 +135,45 @@ $('continue').addEventListener('click', () => startGame(loadPlayer()));
 function startGame(player) {
   $('player-name').textContent = player.name;
   show('game');
-  initGame(); // step 4: pass { onFinish } to submit the score
+  initGame({ onFinish });
 }
+
+const SUBMIT_ERRORS = {
+  ALREADY_SUBMITTED: 'You already have a score today (another device?). Your first result counts.',
+  WRONG_DAY: 'The day ended before you finished, so this score wasn’t saved.',
+};
+
+// Game over: show results, save the score once, then refresh with the rank.
+async function onFinish(state, restored) {
+  const player = loadPlayer();
+  if (!player) return;
+
+  // Let the last flip (and the confetti on a win) play before the popup covers it.
+  const delay = restored ? 0 : state.status === 'won' ? 2200 : 1400;
+  setTimeout(() => openResults(state, player.name), delay);
+  if (state.submitted) return;
+
+  setStatus('Saving your score…');
+  try {
+    const timeMs = Math.max(1, Math.round(elapsedMs(state)));
+    state.rank = await submitScore(player.name, player.token, state.day, score(state), timeMs);
+    state.submitted = true;
+    setStatus('');
+  } catch (err) {
+    if (SUBMIT_ERRORS[err.message]) {
+      state.submitted = true; // retrying won't help
+      setStatus(SUBMIT_ERRORS[err.message]);
+    } else if (err.message === 'BAD_TOKEN') {
+      setStatus('Your login has expired. Log out and in again to save this score.');
+    } else {
+      setStatus(`Couldn’t save your score (${err.message}). It will retry next time you open the game.`);
+    }
+  }
+  saveState(state);
+  refreshResults(state);
+}
+
+$('open-board').addEventListener('click', () => openResults(currentState(), loadPlayer()?.name ?? ''));
 
 $('sign-out').addEventListener('click', () => {
   if (!confirm('Log out? Log back in with your callsign and Morse password.')) return;
