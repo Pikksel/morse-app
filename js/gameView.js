@@ -358,9 +358,11 @@ function wireEvents() {
 
 export const currentState = () => state;
 
-export function initGame({ onFinish } = {}) {
+// owner: the logged-in callsign (each callsign has its own saved game).
+export function initGame({ owner, onFinish } = {}) {
   if (onFinish) onGameOver = onFinish;
-  state = loadState();
+  stop(); // switching player mid-sound
+  state = loadState(owner);
   playing = false;
 
   buildSquares();

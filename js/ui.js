@@ -135,7 +135,7 @@ $('continue').addEventListener('click', () => startGame(loadPlayer()));
 function startGame(player) {
   $('player-name').textContent = player.name;
   show('game');
-  initGame({ onFinish });
+  initGame({ owner: player.name, onFinish });
 }
 
 const SUBMIT_ERRORS = {

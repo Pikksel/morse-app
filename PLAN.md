@@ -26,7 +26,7 @@ From inside `Morse-web/` (the plain `python -m http.server` serves .js as text/p
 ```
 python -c "import http.server as h, mimetypes as m; m.add_type('text/javascript', '.js'); h.test(HandlerClass=h.SimpleHTTPRequestHandler, port=8000)"
 ```
-Open http://localhost:8000. If you see a MIME error after a server change, use DevTools → Empty cache and hard reload.
+Open http://localhost:8000. **Keep DevTools open with Network → "Disable cache" ticked** while developing; otherwise the browser runs old JS after changes (this caused several "bugs" that weren't).
 
 ## Files
 | File | Purpose |
@@ -117,6 +117,14 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [x] Confetti burst from the squares on a win (`js/confetti.js`, own canvas code, respects reduced motion)
 - [x] Effects only play at the moment it happens, not when reopening a finished game
 - [x] Results popup waits 2.2 s on a win so the confetti is visible
+
+### 4.6 Testing without waiting a day
+- Debug reset button: built, then dropped (2026-10-12). Test with a new callsign instead.
+- [x] Saved game per callsign (`morse-web:game:<CALL>`), so a new account in the same browser gets a fresh game
+
+### Before sharing: purge test data
+- [ ] Beta test (play on phone + PC with a few accounts)
+- [ ] Purge test players + scores in Supabase SQL Editor: `delete from players;` (sessions + scores go with them via `on delete cascade`)
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

@@ -41,13 +41,15 @@ export function knownLetters(state) {
     state.guesses.some((g) => g.word[i] === letter) ? letter : BLANK);
 }
 
-// ---------- Saved state (one game per day) ----------
+// ---------- Saved state (one game per day, per callsign) ----------
 
-const KEY = 'morse-web:game';
+// Each callsign has its own game, so several players can share a device.
+const keyFor = (owner) => `morse-web:game:${owner}`;
 
-function newState(day) {
+function newState(day, owner) {
   return {
     day,
+    owner,             // callsign this game belongs to
     tries: 0,          // plays used
     canGuess: false,   // one guess per play
     guesses: [],       // { word, tryNumber }; word uses BLANK for empty squares
@@ -59,18 +61,19 @@ function newState(day) {
   };
 }
 
-export function loadState() {
+export function loadState(owner) {
   const day = todayKey();
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY));
+    localStorage.removeItem('morse-web:game'); // old shared key from before per-callsign saves
+    const saved = JSON.parse(localStorage.getItem(keyFor(owner)));
     if (saved?.day === day && typeof saved.tries === 'number') return saved;
   } catch {}
-  return newState(day);
+  return newState(day, owner);
 }
 
 export function saveState(state) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(keyFor(state.owner), JSON.stringify(state));
   } catch {}
 }
 
