@@ -178,6 +178,16 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [ ] **User: run `006_badge_rules.sql`** in Supabase
 - How to change badges: text/icon only → `js/badges.js`. Rules → new migration with the whole `_badges_earned` function (never re-run old migrations)
 
+### 4.12 Title screen (2026-10-13)
+- [x] Full-screen drifting gradient, "PLAY" in Orbitron (Google Fonts), "MORSE DAILY" under it (`js/splash.js`)
+- [x] Ring around PLAY = "PLAY" in real Morse (dots/dashes via SVG stroke-dasharray, 3× around, slowly rotating)
+- [x] Tap: `sounds/enter.mp3`, ring flies out + word fades (0.65 s), then login/game eases in over 1 s
+- [x] The tap also unlocks the Morse audio (helps phones)
+- [x] Returning players: results popup now waits until after PLAY + the entrance animation
+- [x] Popups fade/slide in
+- [x] `sounds/enter.mp3` added
+- [x] VIP sounds: USSR → `sounds/USSR.mp3`, RM1 → `sounds/RM1.mp3` on the PLAY tap (`PLAYER_SOUNDS` in `js/sfx.js`; loaded only for that player). Add more players/sounds (win, fail, badge…) in the same list
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)

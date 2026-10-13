@@ -10,6 +10,9 @@
   --correct: #4a9d5b;
   --absent: #7c7f84;
   --key: #e4dfd3;
+  --splash-a: #fff4e6;
+  --splash-b: #efe6d6;
+  --splash-glow: rgb(217 130 43 / 0.28);
   --radius: 10px;
   --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
@@ -27,6 +30,9 @@
     --correct: #3f8a4f;
     --absent: #2b2e32;
     --key: #50555c;
+    --splash-a: #1e2244;
+    --splash-b: #111215;
+    --splash-glow: rgb(240 160 75 / 0.2);
   }
 }
 
@@ -217,6 +223,106 @@ button.link {
   border: 1px solid var(--accent);
   border-radius: 999px;
   color: var(--accent);
+}
+
+/* ---------- Title screen ---------- */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 28px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 50% 42%, var(--splash-glow), transparent 55%),
+    linear-gradient(160deg, var(--splash-a), var(--splash-b), var(--splash-a));
+  background-size: 100% 100%, 300% 300%;
+  animation: splash-drift 14s ease-in-out infinite alternate;
+}
+
+.splash-play {
+  position: relative;
+  width: min(72vw, 290px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--text);
+  background: none;
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+.splash-play:focus-visible { outline: 3px solid var(--accent); outline-offset: 6px; }
+
+.splash-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: ring-spin 40s linear infinite;
+}
+.ring-track { fill: none; stroke: var(--border); stroke-width: 1; opacity: 0.7; }
+.ring-morse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px var(--accent));
+}
+
+.splash-word {
+  font-family: 'Orbitron', var(--mono);
+  font-weight: 900;
+  font-size: clamp(2.6rem, 13vw, 3.6rem);
+  letter-spacing: 0.14em;
+  padding-left: 0.14em; /* letter-spacing adds space after the last letter: keep it centred */
+  text-shadow: 0 0 18px var(--splash-glow);
+  animation: word-pulse 2.6s ease-in-out infinite;
+}
+.splash-play:hover .splash-word { text-shadow: 0 0 26px var(--accent); }
+
+.splash-title {
+  margin: 0;
+  font-family: 'Orbitron', var(--mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.45em;
+  padding-left: 0.45em;
+  color: var(--muted);
+}
+
+/* After the tap: ring flies outward, word fades, then the whole screen fades away */
+.splash.leaving { animation: splash-out 0.35s ease-in 0.3s forwards; }
+.splash.leaving .splash-ring { animation: ring-out 0.65s ease-in forwards; }
+.splash.leaving .splash-word { animation: word-out 0.45s ease-in forwards; }
+.splash.leaving .splash-title { transition: opacity 0.3s; opacity: 0; }
+
+@keyframes splash-drift { to { background-position: 0 0, 100% 100%; } }
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+@keyframes word-pulse { 50% { opacity: 0.75; } }
+@keyframes ring-out { to { transform: scale(1.8); opacity: 0; } }
+@keyframes word-out { to { opacity: 0; letter-spacing: 0.5em; filter: blur(6px); } }
+@keyframes splash-out { to { opacity: 0; } }
+
+/* Screen shown after the title: 1-second entrance */
+.screen-enter { animation: screen-in 1s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); filter: blur(6px); }
+}
+
+/* Popups ease in too */
+.dialog[open] { animation: dialog-in 0.3s ease-out; }
+.dialog[open]::backdrop { animation: backdrop-in 0.3s ease-out; }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+@keyframes backdrop-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash, .splash-ring, .splash-word { animation: none; }
+  .splash.leaving .splash-ring, .splash.leaving .splash-word { animation: none; opacity: 0; }
+  .screen-enter { animation-duration: 0.3s; }
 }
 
 /* ---------- Header actions ---------- */

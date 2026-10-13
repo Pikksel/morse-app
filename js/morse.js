@@ -58,6 +58,11 @@ function getPlayer(wpm) {
   return player;
 }
 
+// Call from a tap (e.g. the title screen): sets up the Morse audio while the browser allows it.
+export function primeAudio() {
+  if (typeof jscw !== 'undefined') getPlayer(20);
+}
+
 // Plays text at the given speed. onLetter(index) fires as each letter starts;
 // onDone runs when playback finishes.
 export function play(text, wpm, onDone, onLetter = () => {}) {

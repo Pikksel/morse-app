@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Morse Daily</title>
   <meta name="description" content="A daily Morse code word game with a callsign leaderboard.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap">
   <link rel="stylesheet" href="style.css">
   <script async src="https://fkurz.net/ham/jscwlib/releases/jscwlib-0.3.0.js"></script>
   <script type="module" src="js/ui.js"></script>
 </head>
 <body>
+  <!-- Title screen: PLAY inside a ring that spells PLAY in Morse -->
+  <section id="splash" class="splash">
+    <button id="splash-play" type="button" class="splash-play" aria-label="Play">
+      <svg class="splash-ring" viewBox="0 0 260 260" aria-hidden="true">
+        <circle cx="130" cy="130" r="118" class="ring-track" />
+        <circle id="splash-ring" cx="130" cy="130" r="118" class="ring-morse" stroke-width="5" />
+      </svg>
+      <span class="splash-word">PLAY</span>
+    </button>
+    <p class="splash-title">MORSE DAILY</p>
+  </section>
+
   <main>
 
     <!-- Start: new player / log in -->

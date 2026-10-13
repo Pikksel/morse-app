@@ -5,12 +5,19 @@ import { saveState, score, elapsedMs } from './game.js';
 import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
 import { openBadges } from './badgesView.js';
 import { beep } from './morse.js';
+import { runSplash } from './splash.js';
 
 const $ = (id) => document.getElementById(id);
 
 const screens = ['start', 'saved', 'game'];
-function show(screen) {
+// enter = play the 1-second entrance animation (used right after the title screen)
+function show(screen, { enter = false } = {}) {
   for (const s of screens) $(s).hidden = s !== screen;
+  if (enter) {
+    $(screen).classList.remove('screen-enter');
+    void $(screen).offsetWidth; // restart the animation
+    $(screen).classList.add('screen-enter');
+  }
 }
 
 const SYMBOL = { '.': '•', '-': '—' };
@@ -148,9 +155,9 @@ $('continue').addEventListener('click', () => startGame(loadPlayer()));
 
 // ---------- Game ----------
 
-function startGame(player) {
+function startGame(player, { enter = false } = {}) {
   $('player-name').textContent = player.name;
-  show('game');
+  show('game', { enter });
   initGame({ owner: player.name, onFinish });
 }
 
@@ -165,7 +172,8 @@ async function onFinish(state, restored) {
   if (!player) return;
 
   // Let the last flip (and the confetti on a win) play before the popup covers it.
-  const delay = restored ? 0 : state.status === 'won' ? 2200 : 1400;
+  // Reopened finished game: wait for the screen's entrance animation first.
+  const delay = restored ? 900 : state.status === 'won' ? 2200 : 1400;
   setTimeout(() => openResults(state, player.name), delay);
   if (state.submitted) return;
 
@@ -208,9 +216,15 @@ $('sign-out').addEventListener('click', () => {
 paintPassword();
 setMode('new');
 
-const player = loadPlayer();
-if (player?.name && player?.token) {
-  startGame(player);
+// Title screen first; the app starts when the player taps PLAY.
+runSplash().then(enterApp);
+
+function enterApp() {
+  $('splash').hidden = true;
+  const player = loadPlayer();
+  if (!player?.name || !player?.token) return show('start', { enter: true });
+
+  startGame(player, { enter: true });
   // Session removed on the server (e.g. logged out elsewhere)? Back to log in.
   verifyPlayer(player.name, player.token)
     .then((ok) => {
@@ -222,6 +236,4 @@ if (player?.name && player?.token) {
       show('start');
     })
     .catch(() => {}); // offline: keep playing
-} else {
-  show('start');
 }
