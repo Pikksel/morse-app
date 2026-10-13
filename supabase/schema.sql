@@ -25,7 +25,7 @@ create table if not exists public.scores (
   id          bigint generated always as identity primary key,
   player_id   uuid not null references public.players(id) on delete cascade,
   day         date not null,
-  guesses     int  not null check (guesses between 1 and 22), -- tries used; 22 = failed
+  guesses     int  not null check (guesses between 1 and 26), -- tries used; 26 = failed
   time_ms     int  not null check (time_ms > 0),
   created_at  timestamptz not null default now(),
   unique (player_id, day)
@@ -262,9 +262,9 @@ as $$
   union all select 'regular'       where (select count(*) from mine) >= 10
   union all select 'veteran'       where (select count(*) from mine) >= 50
   union all select 'old_timer'     where (select count(*) from mine) >= 100
-  union all select 'speed_demon'   where exists (select 1 from mine where guesses <= 3)
+  union all select 'speed_demon'   where exists (select 1 from mine where guesses <= 4)
   union all select 'qrq'           where exists (select 1 from mine where guesses = 1)
-  union all select 'never_give_up' where exists (select 1 from mine where guesses between 19 and 21)
+  union all select 'never_give_up' where exists (select 1 from mine where guesses between 23 and 25)
   union all select 'streak_7'      where exists (select 1 from play_runs where len >= 7)
   union all select 'streak_30'     where exists (select 1 from play_runs where len >= 30)
   union all select 'top_band'      where exists (select 1 from tops)

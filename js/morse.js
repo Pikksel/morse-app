@@ -13,8 +13,48 @@ let playId = 0;     // ignores a late onFinished from a sound that was cut off
 // (Bluetooth/USB headsets) swallow that, cutting off the first letter.
 const LEAD_IN_S = 0.4;
 
+// Phones in silent mode mute Web Audio (it counts as "ambient" sound) but still play media
+// (<audio>, video, music). So jscwlib's output is sent through a hidden <audio> element:
+// the phone then treats the Morse as media, like the win/fail MP3s.
+let mediaEl = null;
+
+function routeThroughMediaElement() {
+  if (player.mode !== 'audio') return; // jscwlib's <audio> fallback mode has no Web Audio graph
+  if (!player.init_done) player.init(); // jscwlib builds its audio graph lazily; we need it now
+  try {
+    const stream = player.audioCtx.createMediaStreamDestination();
+    mediaEl = new Audio();
+    mediaEl.srcObject = stream.stream;
+    player.analyser.disconnect();       // was: analyser → speakers
+    player.analyser.connect(stream);    // now: analyser → stream → <audio> → speakers
+    mediaEl.play().catch(useSpeakersDirectly);
+  } catch {
+    useSpeakersDirectly();
+  }
+}
+
+// Fallback if the browser can't play the stream: back to jscwlib's normal output.
+function useSpeakersDirectly() {
+  mediaEl = null;
+  try { player.analyser.disconnect(); } catch {}
+  player.analyser.connect(player.audioCtx.destination);
+}
+
+// Browsers pause audio after a while in the background; wake it on every play (always a tap).
+function wakeAudio() {
+  if (player.mode !== 'audio') return;
+  if (player.audioCtx.state === 'suspended') player.audioCtx.resume();
+  if (mediaEl?.paused) mediaEl.play().catch(() => {});
+}
+
 function getPlayer(wpm) {
-  if (!player) player = new jscw({ wpm, freq: 650 });
+  if (!player) {
+    // Safari 17+: ask for media-style playback, which ignores the silent switch.
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    player = new jscw({ wpm, freq: 650 });
+    routeThroughMediaElement();
+  }
+  wakeAudio();
   return player;
 }
 

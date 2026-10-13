@@ -9,7 +9,7 @@ import { confetti } from './confetti.js';
 
 const $ = (id) => document.getElementById(id);
 
-const KEY_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', '+ZXCVBNM-']; // + = Enter, - = Backspace
+const KEY_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM-']; // - = Backspace (Guess has its own button)
 
 let state;
 let slots = [];      // letters in the 5 squares (BLANK = empty)
@@ -35,12 +35,14 @@ function buildSquares() {
   }
 }
 
+// One dot per try, with a gap wherever the speed drops.
 function buildMeter() {
   const meter = $('meter');
   meter.innerHTML = '';
   for (let t = 1; t <= MAX_TRIES; t++) {
     const dot = document.createElement('span');
     dot.className = 'dot';
+    if (t < MAX_TRIES && wpmForTry(t + 1) !== wpmForTry(t)) dot.classList.add('speed-end');
     dot.title = `Try ${t}: ${wpmForTry(t)} WPM`;
     meter.append(dot);
   }
@@ -56,11 +58,7 @@ function buildKeyboard() {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'key';
-      if (k === '+') {
-        btn.dataset.key = 'Enter';
-        btn.textContent = 'Guess';
-        btn.classList.add('wide');
-      } else if (k === '-') {
+      if (k === '-') {
         btn.dataset.key = 'Backspace';
         btn.textContent = '⌫';
         btn.setAttribute('aria-label', 'Backspace');
@@ -137,6 +135,7 @@ function paintHistory() {
 
 function paintKeyboard() {
   $('keyboard').classList.toggle('disabled', !canType());
+  $('guess').disabled = !canType();
 }
 
 function message(text) {
@@ -338,6 +337,7 @@ function wireEvents() {
   wired = true;
 
   $('play').addEventListener('click', onPlayClick);
+  $('guess').addEventListener('click', () => handleKey('Enter'));
   $('word').addEventListener('click', onSquareClick);
 
   $('keyboard').addEventListener('click', (e) => {

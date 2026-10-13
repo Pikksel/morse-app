@@ -83,7 +83,7 @@ async function loadBoard() {
         body.append(row([r.rank, r.name, r.games, Number(r.avg_guesses).toFixed(1)], r.name === me));
       }
       note.textContent = rows.length
-        ? 'Players with 3+ games. A miss counts as 22 tries.'
+        ? `Players with 3+ games. A miss counts as ${MAX_TRIES + 1} tries.`
         : 'Nobody has 3 games yet.';
     }
   } catch (err) {

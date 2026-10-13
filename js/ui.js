@@ -26,7 +26,11 @@ function setMode(next) {
   $('tab-login').setAttribute('aria-selected', mode === 'login');
   $('auth-submit').textContent = mode === 'new' ? 'Create callsign' : 'Log in';
   $('name-hint').hidden = mode !== 'new';
-  $('pw-hint').hidden = mode !== 'new';
+  $('name-label').textContent = mode === 'new' ? 'Pick a callsign' : 'Your callsign';
+  $('pw-label-text').textContent = mode === 'new' ? 'Tap your secret Morse code' : 'Tap your Morse code';
+  $('pw-hint').textContent = mode === 'new'
+    ? 'Your password is 4 dits or dahs, e.g. • — — •. Remember it: you need it to log in on other devices.'
+    : 'The 4 dits or dahs you chose when you signed up.';
   $('auth-error').textContent = '';
 }
 
@@ -79,10 +83,17 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Briefly pulses an element to point the player at it.
+function flash(el) {
+  el.classList.remove('attention');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('attention');
+}
+
 const ERRORS = {
   NAME_TAKEN: 'That callsign is taken. If it’s yours, use Log in.',
   INVALID_NAME: 'Use 1–4 letters or digits.',
-  INVALID_PASSWORD: 'Enter 4 dits or dahs.',
+  INVALID_PASSWORD: 'Tap • dit and — dah 4 times to make your password.',
   BAD_LOGIN: 'Wrong callsign or password.',
 };
 
@@ -97,7 +108,11 @@ $('auth-form').addEventListener('submit', async (e) => {
   error.textContent = '';
 
   if (!NAME_PATTERN.test(name)) return (error.textContent = ERRORS.INVALID_NAME);
-  if (!PASSWORD_PATTERN.test(password)) return (error.textContent = ERRORS.INVALID_PASSWORD);
+  if (!PASSWORD_PATTERN.test(password)) {
+    error.textContent = ERRORS.INVALID_PASSWORD;
+    flash($('pw-pad'));
+    return;
+  }
 
   setBusy(true);
   try {

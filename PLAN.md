@@ -81,10 +81,10 @@ Open http://localhost:8000. **Keep DevTools open with Network → "Disable cache
 - [x] Test: wrong password ×5 → "Too many wrong tries"
 
 ### 3. Game core (redesigned 2026-10-10: morsle rules, mobile first)
-Rules: 21 tries. Each Play = 1 try = 1 guess. Speed 35 WPM, −5 every 3 tries, down to 10 (35 ×3, 30 ×3, 25 ×3, 20 ×3, 15 ×3, 10 ×6). Changed from 40 on 2026-10-12: too fast.
+Rules: **25 tries** (was 21, changed 2026-10-13). Each Play = 1 try = 1 guess. Speed 35 WPM, −5 every 4 tries, down to 10 (35 ×4, 30 ×4, 25 ×4, 20 ×4, 15 ×4, 10 ×5).
 Guessing again without Play ("blind guess") also costs a try. Keyboard stays active after the first Play.
 Blanks allowed. Correct letters turn green and stay locked; no other hints.
-Score = tries used (1–21), 22 = failed; tie-break on time.
+Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] `js/words.js`: 250 answers
 - [x] Daily word: same for everyone, changes 00:00 UTC
 - [x] `js/game.js`: tries, WPM schedule, green-only evaluation, saved state (tested in Node)
@@ -137,24 +137,24 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [ ] User: find an alien/UFO sound for First Contact (replace `sounds/first-time.mp3`, same name)
 - Later: show badges next to callsigns on the leaderboard (`get_badges` is ready)
 
-### 4.8 Beta feedback round 1 (planned 2026-10-13)
-0. [ ] User: commit + push yesterday's staged work (badges, 35 WPM). Live site still runs the older version!
+### 4.8 Beta feedback round 1 (2026-10-13)
+0. [x] Yesterday's work committed + pushed
 1. **25 tries** (was 21)
-   - [ ] `MAX_TRIES` 25 (loss scores 26). Speed: 4 tries per level, 35 ×4, 30 ×4, 25 ×4, 20 ×4, 15 ×4, 10 ×5
-   - [ ] Dot meter groups by speed level automatically (no hardcoded 21 columns)
-   - [ ] Migration `004_25_tries.sql`: scores 1–26, convert old losses 22 → 26, Never Give Up = try 23–25
-   - [ ] Update texts mentioning 21/22 (badge desc, all-time note, schema.sql)
+   - [x] `MAX_TRIES` 25 (loss scores 26). Speed: 4 tries per level, 35 ×4, 30 ×4, 25 ×4, 20 ×4, 15 ×4, 10 ×5
+   - [x] Dot meter groups by speed level automatically (`.speed-end` gap)
+   - [x] Migration `004_25_tries.sql`: scores 1–26, old losses 22 → 26, Speed Demon = try 1–4, Never Give Up = try 23–25 (tested in PGlite, both paths)
+   - [x] Texts updated (intro, badge descs, all-time note, schema.sql)
+   - [ ] **User: run `004_25_tries.sql`** in Supabase
 2. **Guess button**
-   - [ ] [▶ Play] [Guess] side by side under the squares; remove Guess key from the on-screen keyboard (Enter still works)
+   - [x] [▶ Play] [Guess] side by side under the squares; Guess key removed from keyboard (Enter still works)
 3. **Clearer Morse password**
-   - [ ] Numbered steps: ① Pick a callsign ② Tap your secret Morse code
-   - [ ] Pad buttons labelled "• dit" / "— dah", example "e.g. • — — •", hint on both tabs
-   - [ ] Submitting without a password highlights the pad with a clear message
+   - [x] Numbered steps ① ②, labels change per tab, hint with example on both tabs
+   - [x] Pad buttons labelled "dit" / "dah"
+   - [x] Submitting without a password pulses the pad + "Tap • dit and — dah 4 times…"
 4. **Android silent mode: no Morse audio**
-   - Theory: Morse = Web Audio (muted as "ambient" in silent mode), MP3s = media (plays)
-   - [ ] Route jscwlib output through a hidden `<audio>` element (MediaStreamDestination) + resume AudioContext on each Play
-   - [ ] Testers confirm: browser (Chrome / Samsung Internet)? Did win/fail MP3s play on silent? Did dit/dah beeps play?
-   - [ ] Retest on Android (silent) + iPhone (silent switch)
+   - [x] jscwlib output routed through a hidden `<audio>` (MediaStreamDestination), falls back to direct output; AudioContext resumed on each play; Safari `audioSession = 'playback'`
+   - [ ] Testers: retest on Android (silent) + iPhone (silent switch)
+   - [ ] (Optional) testers' answers: browser? did win/fail MP3s play on silent?
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

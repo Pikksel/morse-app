@@ -16,7 +16,7 @@
     <section id="start" hidden>
       <h1>Morse Daily</h1>
       <p class="morse" aria-hidden="true">-- --- .-. ... .</p>
-      <p>Hear one word in Morse code each day. Guess it in 21 tries.</p>
+      <p>Hear one word in Morse code each day. Guess it in 25 tries.</p>
 
       <div class="tabs" role="tablist">
         <button type="button" role="tab" id="tab-new" aria-selected="true">New player</button>
@@ -24,19 +24,19 @@
       </div>
 
       <form id="auth-form" class="card" novalidate>
-        <label for="auth-name">Callsign</label>
+        <label for="auth-name"><span class="step">1</span> <span id="name-label">Pick a callsign</span></label>
         <input id="auth-name" class="callsign" autocomplete="username" spellcheck="false"
                maxlength="4" placeholder="SM5X" required>
         <p class="hint" id="name-hint">1–4 letters or digits. First come, first served.</p>
 
-        <label id="pw-label">Morse password</label>
+        <label id="pw-label"><span class="step">2</span> <span id="pw-label-text">Tap your secret Morse code</span></label>
+        <p class="hint" id="pw-hint"></p>
         <div id="pw-slots" class="pw-slots" aria-labelledby="pw-label" aria-live="polite"></div>
-        <div class="pw-pad">
-          <button type="button" class="secondary" data-sym="." aria-label="Dit">•</button>
-          <button type="button" class="secondary" data-sym="-" aria-label="Dah">—</button>
+        <div class="pw-pad" id="pw-pad">
+          <button type="button" class="secondary" data-sym="." aria-label="Dit"><span>•</span><small>dit</small></button>
+          <button type="button" class="secondary" data-sym="-" aria-label="Dah"><span>—</span><small>dah</small></button>
           <button type="button" class="secondary" data-sym="back" aria-label="Delete">⌫</button>
         </div>
-        <p class="hint" id="pw-hint">4 dits or dahs. Remember it to log in on other devices.</p>
 
         <button type="submit" id="auth-submit">Create callsign</button>
         <p id="auth-error" class="error" role="alert"></p>
@@ -73,7 +73,10 @@
 
       <div id="word" class="word" aria-label="Your guess" aria-live="polite"></div>
       <p id="message" class="message" role="status"></p>
-      <button id="play" type="button" class="play"></button>
+      <div class="actions">
+        <button id="play" type="button" class="play"></button>
+        <button id="guess" type="button" class="guess">Guess</button>
+      </div>
 
       <ol id="history" class="history" aria-label="Previous guesses"></ol>
       <div id="keyboard" class="keyboard"></div>

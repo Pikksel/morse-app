@@ -1,13 +1,13 @@
 // Pure game logic: daily word, tries, guess evaluation, saved state. No DOM here.
 //
 // Rules (inspired by morsle.fun):
-// - 21 tries. Each Play costs one try and grants one guess.
-// - Speed starts at 35 WPM and drops 5 WPM every 3 tries, down to 10 (35, 30, ... 10, 10).
+// - 25 tries. Each Play costs one try and grants one guess (a blind Guess costs a try too).
+// - Speed starts at 35 WPM and drops 5 WPM every 4 tries, down to 10 (35 ×4, 30 ×4 ... 15 ×4, 10 ×5).
 // - Blanks are allowed. Correct letters turn green; no other hints.
 import { ANSWERS } from './words.js';
 
 export const WORD_LENGTH = 5;
-export const MAX_TRIES = 21;
+export const MAX_TRIES = 25;
 export const BLANK = ' ';
 
 const EPOCH = Date.UTC(2026, 0, 1);
@@ -26,10 +26,11 @@ export function dailyWord(dayKey = todayKey()) {
 
 export const START_WPM = 35;
 export const MIN_WPM = 10;
+export const TRIES_PER_SPEED = 4;
 
-// Try 1–3 → 35 WPM, 4–6 → 30 ... 16–18 → 10, 19–21 → 10.
+// Try 1–4 → 35 WPM, 5–8 → 30, 9–12 → 25, 13–16 → 20, 17–20 → 15, 21–25 → 10.
 export function wpmForTry(tryNumber) {
-  return Math.max(MIN_WPM, START_WPM - 5 * Math.floor((tryNumber - 1) / 3));
+  return Math.max(MIN_WPM, START_WPM - 5 * Math.floor((tryNumber - 1) / TRIES_PER_SPEED));
 }
 
 // true per position where the letter is right.
