@@ -162,6 +162,15 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Results popup fetches the live rank every time it opens
 - [x] Ran `005_get_rank.sql` in Supabase
 
+### 4.10 Badges page (2026-10-13)
+- [x] 🏅 button in the header (next to 🏆) opens a "Badges" popup, same card style as the leaderboard (`js/badgesView.js`)
+- [x] Grid: 3 per row on phones, 4 on wider screens, wrapping down
+- [x] Each square: icon, name, faint "Unlocked MM/DD" (e.g. "Unlocked 10/13", player's own time zone)
+- [x] Locked badges shown too: grayed-out emoji + faint "LOCKED"
+- [x] "3 of 11 unlocked" counter; tap a badge to see how to earn it
+- [x] Icons: phone emoji (decided). Font: unchanged for now
+- [x] Data from `get_badges(name)` (no DB change needed)
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)

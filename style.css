@@ -306,6 +306,46 @@ button.icon-btn {
 .board td:first-child, .board th:first-child { width: 2.5em; color: var(--muted); }
 .board tr.me td { color: var(--accent); font-weight: 700; }
 
+/* ---------- Badges page ---------- */
+
+.badges-count { text-align: center; margin-top: 4px; }
+
+/* 3 per row on phones, 4 on wider screens */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+@media (min-width: 480px) {
+  .badge-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.badge-square {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  padding: 12px 4px 10px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.badge-square:not(.locked) { border-color: var(--accent); }
+
+.sq-icon { font-size: 2.2rem; line-height: 1.1; }
+.sq-name { font-size: 0.8rem; font-weight: 700; line-height: 1.2; text-align: center; }
+.sq-state { font-size: 0.65rem; font-weight: 400; color: var(--muted); letter-spacing: 0.03em; }
+
+/* Locked: grayed-out emoji, faded text */
+.badge-square.locked .sq-icon { filter: grayscale(1); opacity: 0.35; }
+.badge-square.locked .sq-name { color: var(--muted); font-weight: 600; }
+.badge-square.locked .sq-state { letter-spacing: 0.12em; opacity: 0.7; }
+
+.badge-detail { text-align: center; min-height: 2.6em; margin-bottom: 0; }
+
 /* ---------- New badge reveal ---------- */
 
 .new-badges h2 {

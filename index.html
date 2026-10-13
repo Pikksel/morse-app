@@ -57,6 +57,7 @@
       <header class="bar">
         <strong>Morse Daily</strong>
         <div class="bar-actions">
+          <button id="open-badges" type="button" class="icon-btn" aria-label="Badges" title="Badges">🏅</button>
           <button id="open-board" type="button" class="icon-btn" aria-label="Leaderboard" title="Leaderboard">🏆</button>
           <button id="sign-out" type="button" class="badge" title="Log out">
             <span id="player-name"></span>
@@ -117,6 +118,15 @@
     </section>
 
     <p class="countdown">Next word in <b id="countdown"></b></p>
+  </dialog>
+
+  <!-- Badges: unlocked + locked -->
+  <dialog id="badges" class="dialog" aria-labelledby="badges-title">
+    <button id="badges-close" type="button" class="icon-btn dialog-close" aria-label="Close">✕</button>
+    <h2 id="badges-title">Badges</h2>
+    <p id="badges-count" class="hint badges-count"></p>
+    <div id="badge-grid" class="badge-grid"></div>
+    <p id="badge-detail" class="hint badge-detail">Tap a badge to see how to earn it.</p>
   </dialog>
 </body>
 </html>

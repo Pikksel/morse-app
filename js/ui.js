@@ -3,6 +3,7 @@ import { loadPlayer, savePlayer, clearPlayer, NAME_PATTERN, PASSWORD_PATTERN } f
 import { initGame, currentState } from './gameView.js';
 import { saveState, score, elapsedMs } from './game.js';
 import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
+import { openBadges } from './badgesView.js';
 import { beep } from './morse.js';
 
 const $ = (id) => document.getElementById(id);
@@ -191,6 +192,7 @@ async function onFinish(state, restored) {
 }
 
 $('open-board').addEventListener('click', () => openResults(currentState(), loadPlayer()?.name ?? ''));
+$('open-badges').addEventListener('click', () => openBadges(loadPlayer()?.name ?? ''));
 
 $('sign-out').addEventListener('click', () => {
   if (!confirm('Log out? Log back in with your callsign and Morse password.')) return;
