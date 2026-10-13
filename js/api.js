@@ -30,7 +30,11 @@ export const verifyPlayer = (name, token) =>
 export const submitScore = (name, token, day, guesses, timeMs) =>
   rpc('submit_score', { p_name: name, p_token: token, p_day: day, p_guesses: guesses, p_time_ms: timeMs });
 
-export const getDailyLeaderboard = (day, limit = 10) =>
+// After submit_score: stores newly earned badges, returns their ids (empty if none are new).
+export const awardBadges = async (name, token) =>
+  (await rpc('award_badges', { p_name: name, p_token: token })).map((r) => r.new_badge);
+
+export const getDailyLeaderboard =(day, limit = 10) =>
   rpc('get_daily_leaderboard', { p_day: day, p_limit: limit });
 
 export const getAlltimeLeaderboard = (limit = 10) =>

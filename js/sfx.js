@@ -2,6 +2,8 @@
 const sounds = {
   win: new Audio('sounds/win.mp3'),
   fail: new Audio('sounds/fail.mp3'),
+  badge: new Audio('sounds/badge.mp3'),
+  firstContact: new Audio('sounds/first-time.mp3'), // First Contact badge
 };
 for (const audio of Object.values(sounds)) {
   audio.preload = 'auto';

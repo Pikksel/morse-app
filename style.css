@@ -283,6 +283,77 @@ button.icon-btn {
 .board td:first-child, .board th:first-child { width: 2.5em; color: var(--muted); }
 .board tr.me td { color: var(--accent); font-weight: 700; }
 
+/* ---------- New badge reveal ---------- */
+
+.new-badges h2 {
+  color: var(--accent);
+  animation: badge-title 0.5s ease both;
+}
+
+.badge-list { display: grid; gap: 10px; margin-top: 10px; }
+
+.badge-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  animation:
+    badge-pop 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both,
+    badge-glow 1.4s ease-in-out 2;
+  /* --d = stagger per card (set in JS): pop, then glow once it has landed */
+  animation-delay: var(--d, 0s), calc(var(--d, 0s) + 0.7s);
+}
+.badge-card div { display: grid; }
+.badge-name { font-size: 1.1rem; }
+.badge-desc { font-size: 0.85rem; color: var(--muted); }
+
+.badge-icon {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: 1.9rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd58a, var(--accent));
+}
+
+/* Light sweeping across the card once it has landed */
+.badge-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: badge-shine 1s ease both;
+  animation-delay: calc(var(--d, 0s) + 0.6s);
+  pointer-events: none;
+}
+
+@keyframes badge-pop {
+  0%   { opacity: 0; transform: scale(0.3) rotate(-10deg); }
+  60%  { opacity: 1; transform: scale(1.08) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes badge-glow {
+  50% { box-shadow: 0 0 22px var(--accent); }
+}
+@keyframes badge-shine {
+  to { transform: translateX(120%); }
+}
+@keyframes badge-title {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-card, .badge-card::after, .new-badges h2 { animation: none; }
+}
+
 .countdown {
   margin-bottom: 0;
   text-align: center;

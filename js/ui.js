@@ -1,8 +1,8 @@
-import { register, login, logout, verifyPlayer, submitScore } from './api.js';
+import { register, login, logout, verifyPlayer, submitScore, awardBadges } from './api.js';
 import { loadPlayer, savePlayer, clearPlayer, NAME_PATTERN, PASSWORD_PATTERN } from './player.js';
 import { initGame, currentState } from './gameView.js';
 import { saveState, score, elapsedMs } from './game.js';
-import { openResults, refreshResults, setStatus } from './results.js';
+import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
 import { beep } from './morse.js';
 
 const $ = (id) => document.getElementById(id);
@@ -159,6 +159,8 @@ async function onFinish(state, restored) {
     state.rank = await submitScore(player.name, player.token, state.day, score(state), timeMs);
     state.submitted = true;
     setStatus('');
+    // Badges are a bonus: a failure here shouldn't look like the score failed.
+    awardBadges(player.name, player.token).then(showNewBadges).catch(() => {});
   } catch (err) {
     if (SUBMIT_ERRORS[err.message]) {
       state.submitted = true; // retrying won't help

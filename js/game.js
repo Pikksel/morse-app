@@ -2,7 +2,7 @@
 //
 // Rules (inspired by morsle.fun):
 // - 21 tries. Each Play costs one try and grants one guess.
-// - Speed starts at 40 WPM and drops 5 WPM every 3 tries (40, 35, ... 10).
+// - Speed starts at 35 WPM and drops 5 WPM every 3 tries, down to 10 (35, 30, ... 10, 10).
 // - Blanks are allowed. Correct letters turn green; no other hints.
 import { ANSWERS } from './words.js';
 
@@ -24,9 +24,12 @@ export function dailyWord(dayKey = todayKey()) {
   return ANSWERS[i];
 }
 
-// Try 1–3 → 40 WPM, 4–6 → 35 ... 19–21 → 10.
+export const START_WPM = 35;
+export const MIN_WPM = 10;
+
+// Try 1–3 → 35 WPM, 4–6 → 30 ... 16–18 → 10, 19–21 → 10.
 export function wpmForTry(tryNumber) {
-  return 40 - 5 * Math.floor((tryNumber - 1) / 3);
+  return Math.max(MIN_WPM, START_WPM - 5 * Math.floor((tryNumber - 1) / 3));
 }
 
 // true per position where the letter is right.

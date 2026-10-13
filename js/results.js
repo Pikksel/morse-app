@@ -2,6 +2,8 @@
 import { getDailyLeaderboard, getAlltimeLeaderboard } from './api.js';
 import { MAX_TRIES, dailyWord, elapsedMs, formatTime, todayKey } from './game.js';
 import { MORSE } from './morse.js';
+import { BADGES } from './badges.js';
+import { playSfx } from './sfx.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -89,6 +91,40 @@ async function loadBoard() {
   }
 }
 
+// ---------- New badges ----------
+
+let pendingBadges = []; // earned before the popup opened: revealed once it's open
+
+function revealBadges(ids) {
+  const list = $('new-badges-list');
+  list.innerHTML = '';
+  ids.filter((id) => BADGES[id]).forEach((id, i) => {
+    const { icon, name, desc } = BADGES[id];
+    const card = document.createElement('div');
+    card.className = 'badge-card';
+    card.style.setProperty('--d', `${i * 350}ms`); // stagger, used by the CSS animations
+    card.innerHTML = '<span class="badge-icon"></span><div><b class="badge-name"></b><span class="badge-desc"></span></div>';
+    card.querySelector('.badge-icon').textContent = icon;
+    card.querySelector('.badge-name').textContent = name;
+    card.querySelector('.badge-desc').textContent = desc;
+    list.append(card);
+  });
+  if (!list.children.length) return;
+
+  $('new-badges-title').textContent = list.children.length > 1 ? 'New badges!' : 'New badge!';
+  $('new-badges').hidden = false;
+  // A badge with its own sound (e.g. First Contact) wins over the default one.
+  playSfx(ids.map((id) => BADGES[id]?.sound).find(Boolean) ?? 'badge');
+  $('new-badges').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Shows "New badge!" cards below the leaderboard: right away if the popup is open, else after it opens.
+export function showNewBadges(ids) {
+  if (!ids.length) return;
+  if ($('results').open) setTimeout(() => revealBadges(ids), 600);
+  else pendingBadges = ids;
+}
+
 // ---------- Countdown to 00:00 UTC ----------
 
 function tickCountdown() {
@@ -113,6 +149,14 @@ export function openResults(state, name) {
   clearInterval(countdownId);
   countdownId = setInterval(tickCountdown, 1000);
   if (!$('results').open) $('results').showModal();
+
+  // Badges are a one-time reveal: hidden when the popup is reopened later.
+  $('new-badges').hidden = true;
+  if (pendingBadges.length) {
+    const ids = pendingBadges;
+    pendingBadges = [];
+    setTimeout(() => revealBadges(ids), 1000); // after the word + list have been seen
+  }
 }
 
 // Refresh after the score is saved (new rank, new row in the table).

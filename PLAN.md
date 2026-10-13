@@ -81,7 +81,7 @@ Open http://localhost:8000. **Keep DevTools open with Network → "Disable cache
 - [x] Test: wrong password ×5 → "Too many wrong tries"
 
 ### 3. Game core (redesigned 2026-10-10: morsle rules, mobile first)
-Rules: 21 tries. Each Play = 1 try = 1 guess. Speed 40 WPM, −5 every 3 tries, down to 10.
+Rules: 21 tries. Each Play = 1 try = 1 guess. Speed 35 WPM, −5 every 3 tries, down to 10 (35 ×3, 30 ×3, 25 ×3, 20 ×3, 15 ×3, 10 ×6). Changed from 40 on 2026-10-12: too fast.
 Guessing again without Play ("blind guess") also costs a try. Keyboard stays active after the first Play.
 Blanks allowed. Correct letters turn green and stay locked; no other hints.
 Score = tries used (1–21), 22 = failed; tie-break on time.
@@ -110,7 +110,7 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [x] Already played today → results open directly
 - [x] 🏆 button in header opens the leaderboard (no answer shown mid-game)
 - [x] Tested with faked server responses (temp test page, deleted)
-- [ ] **User: test with the real database** (finish a game, see your row; second browser shows it too)
+- [x] Real database works (today's leaderboard has a real score, read from the live site)
 
 ### 4.5 Win / fail effects (2026-10-12)
 - [x] `sounds/win.mp3` on solve, `sounds/fail.mp3` when out of tries (`js/sfx.js`)
@@ -126,6 +126,36 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [ ] Beta test (play on phone + PC with a few accounts)
 - [ ] Purge test players + scores in Supabase SQL Editor: `delete from players;` (sessions + scores go with them via `on delete cascade`)
 
+### 4.7 Badges (2026-10-12)
+- [x] `supabase/migrations/003_badges.sql`: `player_badges` table, `_badges_earned` (rules), `award_badges` (returns only new ones), `get_badges` (public)
+- [x] `schema.sql` updated. SQL tested locally in PGlite: fresh setup AND 001→002→003 migration path
+- [x] 11 badges (`js/badges.js`): First Contact, Regular (10), Veteran (50), Old Timer (100), Speed Demon (try 1–3), QRQ (try 1), Never Give Up (try 19–21), Streak 7/30, Top of the Band (#1 of a finished day), Week Champion (#1 seven finished days in a row)
+- [x] Results popup: word + list first, then "New badge!" cards pop in (bounce, glow, shine) + `sounds/badge.mp3`
+- [x] Shown once: reopening the popup doesn't show them again
+- [ ] **User: run `003_badges.sql`** in Supabase
+- [x] Per-badge sounds: First Contact plays `sounds/first-time.mp3`, others `badge.mp3` (`sound` field in `js/badges.js`)
+- [ ] User: find an alien/UFO sound for First Contact (replace `sounds/first-time.mp3`, same name)
+- Later: show badges next to callsigns on the leaderboard (`get_badges` is ready)
+
+### 4.8 Beta feedback round 1 (planned 2026-10-13)
+0. [ ] User: commit + push yesterday's staged work (badges, 35 WPM). Live site still runs the older version!
+1. **25 tries** (was 21)
+   - [ ] `MAX_TRIES` 25 (loss scores 26). Speed: 4 tries per level, 35 ×4, 30 ×4, 25 ×4, 20 ×4, 15 ×4, 10 ×5
+   - [ ] Dot meter groups by speed level automatically (no hardcoded 21 columns)
+   - [ ] Migration `004_25_tries.sql`: scores 1–26, convert old losses 22 → 26, Never Give Up = try 23–25
+   - [ ] Update texts mentioning 21/22 (badge desc, all-time note, schema.sql)
+2. **Guess button**
+   - [ ] [▶ Play] [Guess] side by side under the squares; remove Guess key from the on-screen keyboard (Enter still works)
+3. **Clearer Morse password**
+   - [ ] Numbered steps: ① Pick a callsign ② Tap your secret Morse code
+   - [ ] Pad buttons labelled "• dit" / "— dah", example "e.g. • — — •", hint on both tabs
+   - [ ] Submitting without a password highlights the pad with a clear message
+4. **Android silent mode: no Morse audio**
+   - Theory: Morse = Web Audio (muted as "ambient" in silent mode), MP3s = media (plays)
+   - [ ] Route jscwlib output through a hidden `<audio>` element (MediaStreamDestination) + resume AudioContext on each Play
+   - [ ] Testers confirm: browser (Chrome / Samsung Internet)? Did win/fail MP3s play on silent? Did dit/dah beeps play?
+   - [ ] Retest on Android (silent) + iPhone (silent switch)
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)
@@ -134,8 +164,10 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - [ ] README with screenshots
 
 ### 6. Deploy
-- [ ] Enable GitHub Pages (Settings → Pages → main / root)
-- [ ] Test the live URL end to end
+- [x] Enable GitHub Pages (Settings → Pages → main / root). **Live: https://pikksel.github.io/morse-app/**
+- [x] Live site: all files load (JS, CSS, MP3), jscwlib loads, Supabase reachable, no console errors
+- [ ] User: play on phone (login, sound, confetti) and PC on the live URL
+- Every `git push` to `main` redeploys automatically (takes ~1 min)
 - [ ] Add to portfolio
 
 ## Known limitations / later ideas
@@ -143,3 +175,11 @@ Score = tries used (1–21), 22 = failed; tie-break on time.
 - Lost recovery code means the name is lost.
 - Any 5 letters count as a guess. Later: add a valid-word list so random letter combos are rejected.
 - jscwlib is hotlinked from fkurz.net. Later: vendor a copy into `js/vendor/` so the game doesn't depend on that site.
+
+## Ideas (after beta test / polish)
+- ~~Badges~~: done, see step 4.7.
+- **Avatar**: Morse-pattern avatar generated from the callsign (on-theme, automatic), or an emoji picker. Avoid photo uploads (storage + moderation).
+- **Streak + stats**: current/best streak, chart of how many tries you usually need.
+- **Practice mode**: random words, no score, unlimited.
+- **Settings**: tone pitch, volume, Farnsworth spacing (jscwlib `eff`).
+- **PWA**: installable on phones (manifest + icon), full screen.
