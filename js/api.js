@@ -34,6 +34,10 @@ export const submitScore = (name, token, day, guesses, timeMs) =>
 export const awardBadges = async (name, token) =>
   (await rpc('award_badges', { p_name: name, p_token: token })).map((r) => r.new_badge);
 
+// Current rank for a day (others may have finished after you). null = no score that day.
+export const getRank = (name, day) =>
+  rpc('get_rank', { p_name: name, p_day: day });
+
 export const getDailyLeaderboard =(day, limit = 10) =>
   rpc('get_daily_leaderboard', { p_day: day, p_limit: limit });
 

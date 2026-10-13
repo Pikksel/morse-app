@@ -1,5 +1,5 @@
 // Results popup: today's result, leaderboards (today / all-time), countdown to the next word.
-import { getDailyLeaderboard, getAlltimeLeaderboard } from './api.js';
+import { getDailyLeaderboard, getAlltimeLeaderboard, getRank } from './api.js';
 import { MAX_TRIES, dailyWord, elapsedMs, formatTime, todayKey } from './game.js';
 import { MORSE } from './morse.js';
 import { BADGES } from './badges.js';
@@ -26,6 +26,18 @@ function paintSummary(state) {
   $('stat-tries').textContent = state.status === 'won' ? `${state.tries}/${MAX_TRIES}` : '✗';
   $('stat-time').textContent = formatTime(elapsedMs(state));
   $('stat-rank').textContent = state.rank ? `#${state.rank}` : '–';
+}
+
+// The rank saved at submit time goes stale when others finish later: ask for the current one.
+async function loadRank(state) {
+  if (!state || state.status === 'playing' || !state.submitted || !me) return;
+  try {
+    const rank = await getRank(me, state.day);
+    if (rank) {
+      state.rank = rank;
+      $('stat-rank').textContent = `#${rank}`;
+    }
+  } catch {} // offline: keep showing the saved rank
 }
 
 export function setStatus(text) {
@@ -143,6 +155,7 @@ function tickCountdown() {
 export function openResults(state, name) {
   me = name;
   paintSummary(state);
+  loadRank(state);
   tab = 'today';
   loadBoard();
   tickCountdown();
@@ -162,6 +175,7 @@ export function openResults(state, name) {
 // Refresh after the score is saved (new rank, new row in the table).
 export function refreshResults(state) {
   paintSummary(state);
+  loadRank(state);
   loadBoard();
 }
 

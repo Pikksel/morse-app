@@ -195,6 +195,20 @@ as $$
   limit least(p_limit, 100)
 $$;
 
+-- A player's current rank for a day (null if they have no score that day).
+create or replace function public.get_rank(p_name text, p_day date)
+returns int
+language sql stable security definer
+set search_path = public
+as $$
+  select r::int from (
+    select p.name, rank() over (order by s.guesses, s.time_ms) as r
+    from public.scores s join public.players p on p.id = s.player_id
+    where s.day = p_day
+  ) t
+  where name = upper(p_name)
+$$;
+
 -- All-time: average guesses, at least 3 games played.
 create or replace function public.get_alltime_leaderboard(p_limit int default 10)
 returns table (rank bigint, name text, games bigint, avg_guesses numeric)
@@ -216,7 +230,8 @@ grant execute on function
   public.verify_player(text, text),
   public.submit_score(text, text, date, int, int),
   public.get_daily_leaderboard(date, int),
-  public.get_alltime_leaderboard(int)
+  public.get_alltime_leaderboard(int),
+  public.get_rank(text, date)
 to anon, authenticated;
 
 -- ---------- Badges (stored once earned; "#1 of the day" counts finished days only) ----------

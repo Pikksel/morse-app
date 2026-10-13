@@ -144,7 +144,7 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
    - [x] Dot meter groups by speed level automatically (`.speed-end` gap)
    - [x] Migration `004_25_tries.sql`: scores 1–26, old losses 22 → 26, Speed Demon = try 1–4, Never Give Up = try 23–25 (tested in PGlite, both paths)
    - [x] Texts updated (intro, badge descs, all-time note, schema.sql)
-   - [ ] **User: run `004_25_tries.sql`** in Supabase
+   - [x] Ran `004_25_tries.sql` in Supabase
 2. **Guess button**
    - [x] [▶ Play] [Guess] side by side under the squares; Guess key removed from keyboard (Enter still works)
 3. **Clearer Morse password**
@@ -155,6 +155,12 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
    - [x] jscwlib output routed through a hidden `<audio>` (MediaStreamDestination), falls back to direct output; AudioContext resumed on each play; Safari `audioSession = 'playback'`
    - [ ] Testers: retest on Android (silent) + iPhone (silent switch)
    - [ ] (Optional) testers' answers: browser? did win/fail MP3s play on silent?
+
+### 4.9 Live rank fix (2026-10-13)
+- Bug: "Rank today" froze at the rank from submit time (first finisher stayed #1 forever)
+- [x] Migration `005_get_rank.sql`: `get_rank(name, day)` = current rank, works outside the top 10 too (tested in PGlite)
+- [x] Results popup fetches the live rank every time it opens
+- [x] Ran `005_get_rank.sql` in Supabase
 
 ### 5. Polish
 - [ ] Share button (emoji grid)
