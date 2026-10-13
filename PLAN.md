@@ -171,6 +171,13 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Icons: phone emoji (decided). Font: unchanged for now
 - [x] Data from `get_badges(name)` (no DB change needed)
 
+### 4.11 Badge rule changes (2026-10-13)
+- [x] Regular 5 games, Veteran 14, Old Timer 30 (were 10 / 50 / 100)
+- [x] New badge 🐢 Turtle: solved a word after more than 5 minutes. Never Give Up icon changed to 💪
+- [x] Migration `006_badge_rules.sql` + `schema.sql` (tested in PGlite: 4 vs 5 games, 5:01 win / 4:59 win / slow loss)
+- [ ] **User: run `006_badge_rules.sql`** in Supabase
+- How to change badges: text/icon only → `js/badges.js`. Rules → new migration with the whole `_badges_earned` function (never re-run old migrations)
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)
