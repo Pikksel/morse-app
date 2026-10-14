@@ -3,7 +3,7 @@
 // this file only plays, shows and sends taps.
 import { turboStart, turboAnswer, getTurboBest } from './api.js';
 import { play, stop } from './morse.js';
-import { playSfx, blip } from './sfx.js';
+import { playSfx, blip, prepareRandom, playRandom } from './sfx.js';
 import { confetti } from './confetti.js';
 import { loadPlayer } from './player.js';
 
@@ -176,6 +176,7 @@ async function startRun() {
   const player = loadPlayer();
   if (!player) return;
   newSessionLook();
+  prepareRandom('turboFail'); // load this run's game-over sound now, so it plays instantly
   $('turbo-intro').hidden = true;
   $('turbo-over').hidden = true;
   message('');
@@ -209,7 +210,7 @@ async function gameOver(score) {
     const r = $('turbo-orb').getBoundingClientRect();
     confetti({ origin: { x: r.left + r.width / 2, y: r.top + r.height / 2 } });
   } else {
-    playSfx('fail');
+    playRandom('turboFail'); // one of several Turbo fail sounds
   }
   $('turbo-over').hidden = false;
 

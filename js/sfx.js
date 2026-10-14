@@ -61,3 +61,67 @@ export function blip(kind) {
     }
   } catch {} // no Web Audio: stay silent
 }
+
+// Sounds with several versions: a random one each time (never the same twice in a row).
+// Static hosting can't list a folder, so the files are named here.
+const RANDOM_SOUNDS = {
+  turboFail: [
+    'sounds/turbo-fail.mp3', 'sounds/turbo-fail2.mp3', 'sounds/turbo-fail3.mp3', 'sounds/turbo-fail4.mp3',
+    'sounds/turbo-fail5.mp3', 'sounds/turbo-fail6.mp3', 'sounds/turbo-fail7.mp3', 'sounds/turbo-fail8.mp3',
+  ],
+};
+const lastPick = {};
+const prepared = {};
+
+// Picks the next random version and starts loading it, so it plays instantly later.
+export function prepareRandom(name) {
+  const files = RANDOM_SOUNDS[name];
+  if (!files) return;
+  const options = files.length > 1 ? files.filter((f) => f !== lastPick[name]) : files;
+  const file = options[Math.floor(Math.random() * options.length)];
+  lastPick[name] = file;
+  prepared[name] = new Audio(file);
+  prepared[name].preload = 'auto';
+  prepared[name].volume = 0.7;
+}
+
+export function playRandom(name) {
+  if (!prepared[name]) prepareRandom(name);
+  const audio = prepared[name];
+  prepared[name] = null; // next time: a new pick
+  audio?.play().catch(() => {});
+}
+
+// Sounds played at a random pitch each time, so repeated taps never sound identical.
+// range: max pitch change (0.12 = ±12%), minStep: always at least this far from the previous pitch.
+const PITCHED_SOUNDS = {
+  tap: { file: 'sounds/enter-tap.mp3', range: 0.12, minStep: 0.05, volume: 0.5 },
+  sonar: { file: 'sounds/sonar.mp3', range: 0.06, minStep: 0.02, volume: 0.45 }, // subtle wobble
+};
+const pitchedPool = {};   // a few players per sound, so quick taps can overlap
+const lastRate = {};
+
+export function playPitched(name) {
+  const cfg = PITCHED_SOUNDS[name];
+  if (!cfg) return;
+  pitchedPool[name] ??= { next: 0, players: Array.from({ length: 4 }, () => {
+    const a = new Audio(cfg.file);
+    a.preload = 'auto';
+    a.volume = cfg.volume;
+    a.preservesPitch = a.mozPreservesPitch = a.webkitPreservesPitch = false; // speed change = pitch change
+    return a;
+  }) };
+
+  let rate;
+  do {
+    rate = 1 + (Math.random() * 2 - 1) * cfg.range;
+  } while (lastRate[name] && Math.abs(rate - lastRate[name]) < cfg.minStep);
+  lastRate[name] = rate;
+
+  const pool = pitchedPool[name];
+  const audio = pool.players[pool.next];
+  pool.next = (pool.next + 1) % pool.players.length; // round-robin: doesn't cut off the previous tap
+  audio.playbackRate = rate;
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+}

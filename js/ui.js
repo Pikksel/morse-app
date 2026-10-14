@@ -160,9 +160,16 @@ $('continue').addEventListener('click', () => goHome(loadPlayer()));
 
 const isTurboLink = () => location.hash === '#turbo';
 
+// Header follows the mode: badges are Daily-only, and Turbo gets its own leaderboard icon.
 function paintMode(mode) {
-  $('mode-daily').setAttribute('aria-selected', mode === 'daily');
-  $('mode-turbo').setAttribute('aria-selected', mode === 'turbo');
+  const turbo = mode === 'turbo';
+  $('mode-daily').setAttribute('aria-selected', !turbo);
+  $('mode-turbo').setAttribute('aria-selected', turbo);
+  $('open-badges').hidden = turbo;
+  const board = $('open-board');
+  board.textContent = turbo ? '🏁' : '🏆';
+  board.title = turbo ? 'Turbo leaderboard' : 'Leaderboard';
+  board.setAttribute('aria-label', board.title);
 }
 
 // Logged in: open the mode the link asks for.

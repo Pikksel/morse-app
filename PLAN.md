@@ -244,8 +244,21 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] 5. Tested at phone size, dark + light mode, with a fake server: right/wrong/timeout, game over, new best, mode switching
 - [x] Per-run look: random hue + one of 5 patterns (dots, stripes, rings, grid, cross), light + dark
 - [x] Generated correct/wrong blips (`blip()` in `js/sfx.js`)
+- [x] Turbo game over (no new best): random one of `sounds/turbo-fail.mp3` … `turbo-fail8.mp3` (8 files, never twice in a row), picked + preloaded at run start. Add more in `RANDOM_SOUNDS` in `js/sfx.js`
+- [x] Header follows the mode: Turbo hides 🏅 badges (Daily-only) and shows 🏁 for the Turbo leaderboard (also on the game-over button)
 - Leaving Turbo mid-run ends the run (score so far counts). Daily results popup now opens only once per session
 - [ ] User: play it on the phone
+
+### 4.16 Title screen: underwater effects (2026-10-14)
+- [x] Tap outside the PLAY ring: 3 CSS ripple rings (thick → thin → faint), steady speed
+- [x] Ripple hits the PLAY ring → ring glows + wobbles at the exact moment (timing from distance; tested: predicted 895 ms, fired 896 ms)
+- [x] Floating dits & dahs drifting up: 8 ambient, +2 per tap, max 40; removed at the top
+- [x] Two depth layers: front = small + bright, deep = bigger, darker, blurred, slower ("under the water")
+- [x] Parallax: layers shift with mouse (desktop) / tilt (Android; iPhone needs a permission prompt, so it stays still)
+- [x] Everything stops after PLAY (no background work); reduced-motion users get no particles
+- [x] Tap sound `sounds/enter-tap.mp3`: one per tap, random pitch ±12%, always ≥5% away from the previous tap, 4 players so quick taps overlap, 50% volume (`PITCHED_SOUNDS` in `js/sfx.js`)
+- [x] Ring hit sometimes pings: `sounds/sonar.mp3`, ~1 in 3 hits (SONAR_CHANCE), never within 2 s of the last (SONAR_COOLDOWN_MS), pitch ±6%, 45% volume
+- Tune in `js/splash.js`: RIPPLE_RADIUS, RIPPLE_MS (must match `.ripple` 1.5s in style.css), RIPPLE_RINGS, AMBIENT, MAX_PARTICLES, PER_TAP
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

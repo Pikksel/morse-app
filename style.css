@@ -299,6 +299,69 @@ button.link {
   color: var(--muted);
 }
 
+/* ---------- Underwater: ripples, floating dits/dahs, parallax ---------- */
+
+.splash-play, .splash-title { position: relative; z-index: 1; } /* above the water layers */
+
+.splash-deep { position: absolute; inset: 0; overflow: hidden; }
+
+/* Layers shift with mouse/tilt (--px/--py from -1 to 1): the deep layer moves less, so it looks farther away */
+.p-layer { position: absolute; inset: -40px; transition: transform 0.5s ease-out; }
+.p-layer.front { transform: translate(calc(var(--px, 0) * 18px), calc(var(--py, 0) * 18px)); }
+.p-layer.back  { transform: translate(calc(var(--px, 0) * 6px), calc(var(--py, 0) * 6px)); }
+
+.particle {
+  position: absolute;
+  bottom: -30px;
+  border-radius: 999px;
+  animation: float-up linear forwards;
+}
+.p-layer.front .particle {
+  --op: 0.6;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+.p-layer.front .dit { width: 7px; height: 7px; }
+.p-layer.front .dah { width: 22px; height: 7px; }
+/* Deep layer: bigger, darker, blurred: like shapes further under the water */
+.p-layer.back .particle {
+  --op: 0.5;
+  background: color-mix(in srgb, var(--accent) 35%, var(--splash-b));
+  filter: blur(1.5px);
+}
+.p-layer.back .dit { width: 13px; height: 13px; }
+.p-layer.back .dah { width: 40px; height: 13px; }
+
+@keyframes float-up {
+  from { transform: translate(0, 0) rotate(var(--tilt)); opacity: 0; }
+  10%  { opacity: var(--op); }
+  85%  { opacity: var(--op); }
+  to   { transform: translate(var(--sway), calc(-100dvh - 80px)) rotate(var(--tilt)); opacity: 0; }
+}
+
+/* Ripple rings: grow at a steady speed (linear) so the ring-hit timing in splash.js matches */
+.ripples { position: absolute; inset: 0; }
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 0 12px color-mix(in srgb, var(--accent) 20%, transparent);
+  pointer-events: none;
+  animation: ripple 1.5s linear both;
+}
+.ripple.r1 { border-width: 2px; opacity: 0.7; }
+.ripple.r2 { border-width: 1px; opacity: 0.45; }
+@keyframes ripple {
+  from { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* A ripple reaches the PLAY ring: it glows and wobbles */
+.splash-play.hit { animation: ring-hit 0.55s ease-out; }
+@keyframes ring-hit {
+  30% { transform: scale(1.045); filter: brightness(1.35) drop-shadow(0 0 14px var(--accent)); }
+}
+
 /* After the tap: ring flies outward, word fades, then the whole screen fades away */
 .splash.leaving { animation: splash-out 0.35s ease-in 0.3s forwards; }
 .splash.leaving .splash-ring { animation: ring-out 0.65s ease-in forwards; }
@@ -326,6 +389,8 @@ button.link {
 
 @media (prefers-reduced-motion: reduce) {
   .splash, .splash-ring, .splash-word { animation: none; }
+  .particle, .splash-play.hit { animation: none; }
+  .ripple { animation-duration: 0.6s; }
   .splash.leaving .splash-ring, .splash.leaving .splash-word { animation: none; opacity: 0; }
   .screen-enter { animation-duration: 0.3s; }
 }
