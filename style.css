@@ -345,6 +345,41 @@ button.link {
   to   { transform: translate(var(--sway), calc(-100dvh - 80px)) rotate(var(--tilt)); opacity: 0; }
 }
 
+/* Easter egg shark: big, dark, blurred shadow far below, gliding across */
+.shark {
+  position: absolute;
+  left: 0;
+  width: min(85vw, 480px);
+  opacity: 0;
+  filter: blur(3px);
+  animation: shark-swim linear forwards;
+  pointer-events: none;
+}
+.shark.rtl { animation-name: shark-swim-rtl; }
+.shark.rtl svg { transform: scaleX(-1); }          /* facing left */
+.shark svg { display: block; width: 100%; overflow: visible; }
+.shark path { fill: color-mix(in srgb, var(--splash-b) 70%, #000); }
+.shark-bob { animation: shark-bob 2.4s ease-in-out infinite alternate; }
+.shark-body { animation: shark-flex 0.9s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 70% 50%; }
+.shark-tail { animation: shark-tail 0.45s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: right center; }
+.scattered { transition: translate 1.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+@keyframes shark-swim {
+  0%   { transform: translateX(-110%); opacity: 0; }
+  12%  { opacity: 0.6; }
+  88%  { opacity: 0.6; }
+  100% { transform: translateX(calc(100vw + 10%)); opacity: 0; }
+}
+@keyframes shark-swim-rtl {
+  0%   { transform: translateX(calc(100vw + 10%)); opacity: 0; }
+  12%  { opacity: 0.6; }
+  88%  { opacity: 0.6; }
+  100% { transform: translateX(-110%); opacity: 0; }
+}
+@keyframes shark-bob  { from { transform: translateY(-14px) rotate(-1.5deg); } to { transform: translateY(14px) rotate(1.5deg); } }
+@keyframes shark-flex { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+@keyframes shark-tail { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+
 /* Ripple rings: grow at a steady speed (linear) so the ring-hit timing in splash.js matches */
 .ripples { position: absolute; inset: 0; }
 .ripple {

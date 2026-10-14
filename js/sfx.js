@@ -5,6 +5,7 @@ const sounds = {
   newBadge: new Audio('sounds/new-badge.mp3'), // each new badge (badge.mp3 retired: too big)
   firstContact: new Audio('sounds/first-time.mp3'), // First Contact badge
   enter: new Audio('sounds/enter.mp3'), // title screen PLAY
+  shark: new Audio('sounds/shark.mp3'), // easter egg on the title screen (silent until the file exists)
 };
 for (const audio of Object.values(sounds)) {
   audio.preload = 'auto';

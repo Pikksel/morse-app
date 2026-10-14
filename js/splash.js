@@ -110,6 +110,82 @@ function shineFrom(x, y) {
   shine.classList.add('on');
 }
 
+// ---------- Easter egg: tap like crazy and a shark swims by ----------
+
+const SHARK_TAPS = 15;          // this many taps…
+const SHARK_WINDOW_MS = 6000;   // …within this time
+const SHARK_COOLDOWN_MS = 60000;
+const SHARK_SWIM_MS = 7000;   // = the length of sounds/shark.mp3
+const SHARK_PEAK_MS = 5000;   // colors drained the most here, then they come back
+const SHARK_GRAY = 'saturate(0.2) brightness(0.85)';
+let tapTimes = [];
+let lastShark = -Infinity;
+
+// Side view, facing right. The tail is its own group so it can sway around the joint.
+const SHARK_SVG = `
+<svg viewBox="0 0 200 72" aria-hidden="true">
+  <g class="shark-tail">
+    <path d="M40 36 L30 37 Q18 29 4 8 Q14 28 21 38 Q14 48 9 62 Q22 47 30 41 L40 42 Z" />
+  </g>
+  <path class="shark-body" d="M38 37 C55 30 75 26 96 24 Q104 15 106 2 L107 1 Q114 13 126 22
+    C150 21 175 25 190 32 Q199 36 196 39 C188 44 175 46 160 46 L146 47 Q140 57 128 67
+    Q128 57 124 50 C100 53 70 49 50 44 L38 42 Z" />
+</svg>`;
+
+function countTap() {
+  const now = performance.now();
+  tapTimes = tapTimes.filter((t) => now - t < SHARK_WINDOW_MS);
+  tapTimes.push(now);
+  if (tapTimes.length >= SHARK_TAPS && now - lastShark > SHARK_COOLDOWN_MS) {
+    lastShark = now;
+    tapTimes = [];
+    shark();
+  }
+}
+
+// The whole scene loses its color as the shark passes: slowly down to the peak, then back.
+// (A CSS transition on `filter`, so it doesn't clash with the splash's own animations.)
+function drainColors() {
+  const splash = $('splash');
+  splash.style.transition = `filter ${SHARK_PEAK_MS}ms ease-in`;
+  splash.style.filter = SHARK_GRAY;
+  setTimeout(() => {
+    splash.style.transition = `filter ${SHARK_SWIM_MS - SHARK_PEAK_MS}ms ease-out`;
+    splash.style.filter = '';
+  }, SHARK_PEAK_MS);
+}
+
+function shark() {
+  const fromRight = Math.random() < 0.5;
+  const el = document.createElement('div');
+  el.className = `shark${fromRight ? ' rtl' : ''}`;
+  el.style.top = `${25 + Math.random() * 40}%`;
+  el.style.animationDuration = `${SHARK_SWIM_MS}ms`;
+  el.innerHTML = `<div class="shark-bob">${SHARK_SVG}</div>`;
+  el.addEventListener('animationend', (e) => { if (e.target === el) el.remove(); });
+  $('particles-back').append(el); // deep layer: behind the ring, same slow parallax
+  playSfx('shark');
+  drainColors();
+
+  // Dits and dahs near the shark get pushed out of its way.
+  const scatterId = setInterval(() => {
+    if (!el.isConnected) return clearInterval(scatterId);
+    const s = el.getBoundingClientRect();
+    const sx = s.left + s.width / 2;
+    const sy = s.top + s.height / 2;
+    for (const p of document.querySelectorAll('.particle:not(.scattered)')) {
+      const r = p.getBoundingClientRect();
+      const dx = r.left - sx;
+      const dy = r.top - sy;
+      if (Math.abs(dx) < s.width * 0.55 && Math.abs(dy) < s.height * 1.2) {
+        p.classList.add('scattered');
+        const away = dy < 0 ? -1 : 1;
+        p.style.translate = `${(fromRight ? -1 : 1) * (30 + Math.random() * 50)}px ${away * (60 + Math.random() * 80)}px`;
+      }
+    }
+  }, 120);
+}
+
 // ---------- Floating dits and dahs ----------
 
 const AMBIENT = 8;          // always drifting
@@ -155,6 +231,7 @@ export function runSplash() {
   const onTap = (e) => {
     if (e.target.closest('#splash-play')) return; // the PLAY ring itself starts the game
     playPitched('tap'); // one sound per tap (not per ripple ring), random pitch each time
+    if (!calm) countTap(); // easter egg
     ripple(e.clientX, e.clientY);
     if (!calm) for (let i = 0; i < PER_TAP; i++) spawnParticle();
   };

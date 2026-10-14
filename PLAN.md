@@ -7,6 +7,16 @@
 > Claude keeps this file up to date and ticks `[x]` when a step is verified.
 > **New Claude chat?** Say: *"Read Morse-web/PLAN.md and continue."*
 
+## ▶ Where we left off (2026-10-14)
+Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–010 applied (Claude applies them via the Supabase connection).
+Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg), calm background when not playing, pause timer when page hidden.
+Open:
+- Decide: keep or remove Turtle for DAW1 / SHYT (earned under old 5-min rule)
+- Add `sounds/shark.mp3`; unused files to delete before commit: `sounds/badge.mp3`, `sounds/enter_old.mp3` (`sounds/sonar.mp3` kept for later)
+- Phone retest (silent mode audio, Android + iPhone)
+- Step 5 polish: share button, help popup, favicon, README with screenshots
+- Optional: shorter URL (rename repo), purge test players before sharing widely
+
 ## Tech stack
 - Vanilla HTML / CSS / JS (ES modules, no build step)
 - Audio: [jscwlib](https://fkurz.net/ham/jscwlib.html) (MIT)
@@ -259,6 +269,8 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Tap sound `sounds/enter-tap.mp3`: one per tap, random pitch ±12%, always ≥5% away from the previous tap, 4 players so quick taps overlap, 50% volume (`PITCHED_SOUNDS` in `js/sfx.js`)
 - [x] Ring hit sound: `sounds/play-shimmer.mp3` on every hit (min 0.3 s apart), pitch ±8%, 35% volume. (Sonar ping tried and dropped; `sounds/sonar.mp3` kept for later)
 - [x] Ring hit animation: smaller bump (1.5%) + a band of light and shadow sweeps through the Morse dashes, entering from the side the ripple came from (SVG gradient `#ring-shine` + `animateTransform`, overlay circle with the same dashes)
+- [x] 🦈 Easter egg: 15 taps within 6 s → a blurred shark silhouette swims across the deep layer (SVG, swaying tail, bobbing path, random direction), plays `sounds/shark.mp3`, scatters nearby dits/dahs, and drains the scene's colors (saturation 20% at the 5 s peak, back by 7 s = sound length; swim 7 s). Cooldown 1 min. Tune: SHARK_TAPS, SHARK_WINDOW_MS, SHARK_COOLDOWN_MS, SHARK_SWIM_MS in `js/splash.js`
+- [ ] User: add `sounds/shark.mp3`
 - Tune in `js/splash.js`: RIPPLE_RADIUS, RIPPLE_MS (must match `.ripple` 1.5s in style.css), RIPPLE_RINGS, AMBIENT, MAX_PARTICLES, PER_TAP
 
 ### 4.17 Daily keyboard readability (2026-10-14)
