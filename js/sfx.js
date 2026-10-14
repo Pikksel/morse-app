@@ -37,3 +37,27 @@ export function playSfx(name, callsign) {
   audio.currentTime = 0;
   audio.play().catch(() => {}); // blocked autoplay or missing file: stay silent
 }
+
+// Short generated feedback sounds (no files needed): 'correct' = rising blip, 'wrong' = low buzz.
+let blipCtx = null;
+export function blip(kind) {
+  try {
+    blipCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (blipCtx.state === 'suspended') blipCtx.resume();
+    const notes = kind === 'correct'
+      ? [{ f: 660, t: 0, d: 0.07 }, { f: 990, t: 0.07, d: 0.1 }]
+      : [{ f: 150, t: 0, d: 0.28, type: 'sawtooth' }];
+    for (const n of notes) {
+      const osc = blipCtx.createOscillator();
+      const gain = blipCtx.createGain();
+      const start = blipCtx.currentTime + n.t;
+      osc.type = n.type ?? 'sine';
+      osc.frequency.value = n.f;
+      gain.gain.setValueAtTime(0.18, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + n.d); // quick fade: no click
+      osc.connect(gain).connect(blipCtx.destination);
+      osc.start(start);
+      osc.stop(start + n.d);
+    }
+  } catch {} // no Web Audio: stay silent
+}

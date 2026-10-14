@@ -4,15 +4,18 @@ import { initGame, currentState } from './gameView.js';
 import { saveState, score, elapsedMs } from './game.js';
 import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
 import { openBadges } from './badgesView.js';
-import { beep } from './morse.js';
+import { beep, stop } from './morse.js';
+import { enterTurbo, leaveTurbo } from './turbo.js';
 import { runSplash } from './splash.js';
 
 const $ = (id) => document.getElementById(id);
 
-const screens = ['start', 'saved', 'game'];
+const screens = ['start', 'saved', 'game', 'turbo'];
 // enter = play the 1-second entrance animation (used right after the title screen)
 function show(screen, { enter = false } = {}) {
+  if (screen !== 'turbo' && !$('turbo').hidden) leaveTurbo();
   for (const s of screens) $(s).hidden = s !== screen;
+  $('app-bar').hidden = screen !== 'game' && screen !== 'turbo'; // header only in the games
   if (enter) {
     $(screen).classList.remove('screen-enter');
     void $(screen).offsetWidth; // restart the animation
@@ -134,7 +137,7 @@ $('auth-form').addEventListener('submit', async (e) => {
       const res = await login(name, password);
       if (res.token) {
         savePlayer(name, res.token);
-        startGame({ name, token: res.token });
+        goHome({ name, token: res.token });
       } else if (res.error === 'LOCKED') {
         const min = Math.ceil(res.retry_after_s / 60);
         error.textContent = `Too many wrong tries. Try again in ${min} min.`;
@@ -151,20 +154,61 @@ $('auth-form').addEventListener('submit', async (e) => {
   }
 });
 
-$('continue').addEventListener('click', () => startGame(loadPlayer()));
+$('continue').addEventListener('click', () => goHome(loadPlayer()));
 
-// ---------- Game ----------
+// ---------- Modes: Daily (default) and Turbo (…/#turbo) ----------
+
+const isTurboLink = () => location.hash === '#turbo';
+
+function paintMode(mode) {
+  $('mode-daily').setAttribute('aria-selected', mode === 'daily');
+  $('mode-turbo').setAttribute('aria-selected', mode === 'turbo');
+}
+
+// Logged in: open the mode the link asks for.
+function goHome(player, { enter = false } = {}) {
+  $('player-name').textContent = player.name;
+  if (isTurboLink()) openTurbo({ enter });
+  else startGame(player, { enter });
+}
 
 function startGame(player, { enter = false } = {}) {
-  $('player-name').textContent = player.name;
+  paintMode('daily');
   show('game', { enter });
   initGame({ owner: player.name, onFinish });
 }
+
+function openTurbo({ enter = false } = {}) {
+  stop(); // daily word still playing?
+  paintMode('turbo');
+  show('turbo', { enter });
+  enterTurbo({ onOpenLeaderboard: () => openResults(null, loadPlayer()?.name ?? '', { tab: 'turbo' }) });
+}
+
+// The switch updates the link too, so …/#turbo can be shared and bookmarked.
+$('mode-daily').addEventListener('click', () => {
+  if (!$('game').hidden) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  startGame(loadPlayer());
+});
+$('mode-turbo').addEventListener('click', () => {
+  if (!$('turbo').hidden) return;
+  history.replaceState(null, '', '#turbo');
+  openTurbo();
+});
+window.addEventListener('hashchange', () => {
+  const player = loadPlayer();
+  if (!player || $('app-bar').hidden) return; // not logged in / on the title screen
+  if (isTurboLink()) openTurbo();
+  else startGame(player);
+});
 
 const SUBMIT_ERRORS = {
   ALREADY_SUBMITTED: 'You already have a score today (another device?). Your first result counts.',
   WRONG_DAY: 'The day ended before you finished, so this score wasn’t saved.',
 };
+
+let resultsShownFor = null; // "CALL:day" whose results popup was already shown this session
 
 // Game over: show results, save the score once, then refresh with the rank.
 async function onFinish(state, restored) {
@@ -172,9 +216,14 @@ async function onFinish(state, restored) {
   if (!player) return;
 
   // Let the last flip (and the confetti on a win) play before the popup covers it.
-  // Reopened finished game: wait for the screen's entrance animation first.
-  const delay = restored ? 900 : state.status === 'won' ? 2200 : 1400;
-  setTimeout(() => openResults(state, player.name), delay);
+  // Reopened finished game: wait for the screen's entrance animation first,
+  // and only once per session (not every time you switch back from Turbo).
+  const key = `${player.name}:${state.day}`;
+  if (!restored || resultsShownFor !== key) {
+    resultsShownFor = key;
+    const delay = restored ? 900 : state.status === 'won' ? 2200 : 1400;
+    setTimeout(() => openResults(state, player.name), delay);
+  }
   if (state.submitted) return;
 
   setStatus('Saving your score…');
@@ -199,7 +248,11 @@ async function onFinish(state, restored) {
   refreshResults(state);
 }
 
-$('open-board').addEventListener('click', () => openResults(currentState(), loadPlayer()?.name ?? ''));
+$('open-board').addEventListener('click', () => {
+  const name = loadPlayer()?.name ?? '';
+  if (!$('turbo').hidden) openResults(null, name, { tab: 'turbo' });
+  else openResults(currentState(), name);
+});
 $('open-badges').addEventListener('click', () => openBadges(loadPlayer()?.name ?? ''));
 
 $('sign-out').addEventListener('click', () => {
@@ -224,7 +277,7 @@ function enterApp() {
   const player = loadPlayer();
   if (!player?.name || !player?.token) return show('start', { enter: true });
 
-  startGame(player, { enter: true });
+  goHome(player, { enter: true });
   // Session removed on the server (e.g. logged out elsewhere)? Back to log in.
   verifyPlayer(player.name, player.token)
     .then((ok) => {

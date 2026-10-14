@@ -1,5 +1,5 @@
 // Results popup: today's result, leaderboards (today / all-time), countdown to the next word.
-import { getDailyLeaderboard, getAlltimeLeaderboard, getRank } from './api.js';
+import { getDailyLeaderboard, getAlltimeLeaderboard, getRank, getTurboLeaderboard } from './api.js';
 import { MAX_TRIES, dailyWord, elapsedMs, formatTime, todayKey } from './game.js';
 import { MORSE } from './morse.js';
 import { BADGES } from './badges.js';
@@ -8,7 +8,9 @@ import { playSfx } from './sfx.js';
 const $ = (id) => document.getElementById(id);
 
 let me = '';          // logged-in callsign, highlighted in the tables
-let tab = 'today';
+let tab = 'today';      // 'today' | 'alltime' | 'turbo'
+let turboScope = 'today'; // Turbo tab: 'today' | 'alltime'
+let loadId = 0;         // ignores slow answers after switching tabs
 let countdownId = null;
 
 // ---------- Summary ----------
@@ -81,15 +83,28 @@ async function loadBoard() {
   const note = $('board-note');
   $('board-today').setAttribute('aria-selected', tab === 'today');
   $('board-alltime').setAttribute('aria-selected', tab === 'alltime');
+  $('board-turbo').setAttribute('aria-selected', tab === 'turbo');
+  $('turbo-scope').hidden = tab !== 'turbo';
+  $('turbo-scope-today').setAttribute('aria-pressed', turboScope === 'today');
+  $('turbo-scope-alltime').setAttribute('aria-pressed', turboScope === 'alltime');
   body.innerHTML = '';
   note.textContent = 'Loading…';
 
-  const current = tab;
+  const id = ++loadId;
+  const stale = () => id !== loadId; // switched tabs while loading
   try {
-    if (tab === 'today') {
+    if (tab === 'turbo') {
+      $('board-head').replaceChildren(head(['#', 'Call', 'Best']));
+      const rows = await getTurboLeaderboard(turboScope);
+      if (stale()) return;
+      for (const r of rows) body.append(row([r.rank, r.name, r.score], r.name === me));
+      note.textContent = rows.length ? 'Best Turbo score per player.'
+        : turboScope === 'today' ? 'No Turbo runs today yet. Be the first!' : 'No Turbo runs yet.';
+      scrollToMe();
+    } else if (tab === 'today') {
       $('board-head').replaceChildren(head(['#', 'Call', 'Tries', 'Time']));
       const rows = await getDailyLeaderboard(todayKey());
-      if (current !== tab) return; // switched tabs while loading
+      if (stale()) return;
       for (const r of rows) {
         body.append(row([r.rank, r.name, triesText(r.guesses), formatTime(r.time_ms)], r.name === me));
       }
@@ -98,7 +113,7 @@ async function loadBoard() {
     } else {
       $('board-head').replaceChildren(head(['#', 'Call', 'Games', 'Avg tries']));
       const rows = await getAlltimeLeaderboard();
-      if (current !== tab) return;
+      if (stale()) return;
       for (const r of rows) {
         body.append(row([r.rank, r.name, r.games, Number(r.avg_guesses).toFixed(1)], r.name === me));
       }
@@ -107,7 +122,7 @@ async function loadBoard() {
         : 'Nobody has 3 games yet.';
     }
   } catch (err) {
-    if (current === tab) note.textContent = `Couldn't load the leaderboard: ${err.message}`;
+    if (!stale()) note.textContent = `Couldn't load the leaderboard: ${err.message}`;
   }
 }
 
@@ -160,11 +175,12 @@ function tickCountdown() {
 // ---------- Public ----------
 
 // state: today's game (summary shown only if finished). name: the logged-in callsign.
-export function openResults(state, name) {
+// tab: which leaderboard to show first ('today' | 'alltime' | 'turbo').
+export function openResults(state, name, { tab: startTab = 'today' } = {}) {
   me = name;
   paintSummary(state);
   loadRank(state);
-  tab = 'today';
+  tab = startTab;
   loadBoard();
   tickCountdown();
   clearInterval(countdownId);
@@ -197,3 +213,6 @@ $('results').addEventListener('click', (e) => {
 });
 $('board-today').addEventListener('click', () => { tab = 'today'; loadBoard(); });
 $('board-alltime').addEventListener('click', () => { tab = 'alltime'; loadBoard(); });
+$('board-turbo').addEventListener('click', () => { tab = 'turbo'; loadBoard(); });
+$('turbo-scope-today').addEventListener('click', () => { turboScope = 'today'; loadBoard(); });
+$('turbo-scope-alltime').addEventListener('click', () => { turboScope = 'alltime'; loadBoard(); });

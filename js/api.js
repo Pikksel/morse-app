@@ -48,3 +48,22 @@ export const getDailyLeaderboard = (day, limit = null) =>
 
 export const getAlltimeLeaderboard = (limit = 10) =>
   rpc('get_alltime_leaderboard', { p_limit: limit });
+
+// ---------- Turbo (server-checked: the database picks letters and keeps the score) ----------
+
+// Returns { run_id, score, lives, next: { letter, wpm, options } }.
+export const turboStart = (name, token) =>
+  rpc('turbo_start', { p_name: name, p_token: token });
+
+// choice = the tapped letter, or null when the timer ran out.
+// Returns { correct, answer, late, score, lives, over, next? }.
+export const turboAnswer = (name, token, runId, choice) =>
+  rpc('turbo_answer', { p_name: name, p_token: token, p_run: runId, p_choice: choice });
+
+// scope 'today' | 'alltime': best score per player.
+export const getTurboLeaderboard = (scope = 'today') =>
+  rpc('get_turbo_leaderboard', { p_scope: scope });
+
+// { today, today_rank, alltime, alltime_rank } (null when no runs).
+export const getTurboBest = (name) =>
+  rpc('get_turbo_best', { p_name: name });

@@ -67,19 +67,23 @@
       <button id="continue" type="button">Start playing</button>
     </section>
 
-    <!-- Game -->
-    <section id="game" hidden>
-      <header class="bar">
-        <strong>Morse Daily</strong>
-        <div class="bar-actions">
-          <button id="open-badges" type="button" class="icon-btn" aria-label="Badges" title="Badges">🏅</button>
-          <button id="open-board" type="button" class="icon-btn" aria-label="Leaderboard" title="Leaderboard">🏆</button>
-          <button id="sign-out" type="button" class="badge" title="Log out">
-            <span id="player-name"></span>
-          </button>
-        </div>
-      </header>
+    <!-- Shared header for Daily + Turbo -->
+    <header id="app-bar" class="bar" hidden>
+      <div class="mode-switch" role="tablist" aria-label="Game mode">
+        <button type="button" role="tab" id="mode-daily" aria-selected="true">Daily</button>
+        <button type="button" role="tab" id="mode-turbo" aria-selected="false">Turbo</button>
+      </div>
+      <div class="bar-actions">
+        <button id="open-badges" type="button" class="icon-btn" aria-label="Badges" title="Badges">🏅</button>
+        <button id="open-board" type="button" class="icon-btn" aria-label="Leaderboard" title="Leaderboard">🏆</button>
+        <button id="sign-out" type="button" class="badge" title="Log out">
+          <span id="player-name"></span>
+        </button>
+      </div>
+    </header>
 
+    <!-- Daily game -->
+    <section id="game" hidden>
       <div class="status">
         <span id="try-count"></span>
         <span id="try-wpm"></span>
@@ -96,6 +100,38 @@
 
       <ol id="history" class="history" aria-label="Previous guesses"></ol>
       <div id="keyboard" class="keyboard"></div>
+    </section>
+
+    <!-- Turbo: one letter, three options, three lives -->
+    <section id="turbo" hidden>
+      <div class="turbo-status">
+        <span id="turbo-lives" class="lives" aria-label="Lives"></span>
+        <span class="turbo-score"><b id="turbo-score">0</b><small>score</small></span>
+        <span id="turbo-wpm" class="turbo-wpm"></span>
+      </div>
+
+      <div class="turbo-stage">
+        <div id="turbo-orb" class="turbo-orb" aria-live="polite"><span id="turbo-orb-text">TURBO</span></div>
+      </div>
+      <div id="turbo-timer" class="turbo-timer" aria-hidden="true"><div id="turbo-timer-bar"></div></div>
+      <p id="turbo-message" class="message" role="status"></p>
+
+      <div id="turbo-options" class="turbo-options" hidden></div>
+
+      <div id="turbo-intro" class="turbo-intro">
+        <p class="hint">One letter plays once. Pick it from three. Three lives, and it gets faster. 5 seconds per letter.</p>
+        <button id="turbo-start" type="button" class="play turbo-start">▶ Start</button>
+      </div>
+
+      <div id="turbo-over" class="turbo-over card" hidden>
+        <h2 id="turbo-over-title">Game over</h2>
+        <p class="turbo-final"><b id="turbo-final-score">0</b><span>points</span></p>
+        <p id="turbo-best" class="hint"></p>
+        <div class="actions">
+          <button id="turbo-again" type="button" class="play">▶ Play again</button>
+          <button id="turbo-board" type="button" class="secondary">🏆 Leaderboard</button>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -120,6 +156,11 @@
     <div class="tabs" role="tablist">
       <button type="button" role="tab" id="board-today" aria-selected="true">Today</button>
       <button type="button" role="tab" id="board-alltime" aria-selected="false">All-time</button>
+      <button type="button" role="tab" id="board-turbo" aria-selected="false">Turbo</button>
+    </div>
+    <div id="turbo-scope" class="scope-switch" hidden>
+      <button type="button" id="turbo-scope-today" aria-pressed="true">Today</button>
+      <button type="button" id="turbo-scope-alltime" aria-pressed="false">All-time</button>
     </div>
     <div id="board-scroll" class="board-scroll">
       <table class="board">

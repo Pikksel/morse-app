@@ -206,6 +206,47 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Tested: fake-clock unit test in Node (10 s + 60 s away + 5 s = 15 s; 1 h closed = 0 s) + browser event test
 - Trade-off: players could step away to think (they can't hear the word while away; time is only the tie-breaker)
 
+### 4.15 Turbo mode (built 2026-10-14)
+**Gameplay**
+- Start → 3 lives ❤️❤️❤️. One letter plays once (no replay), 3 big answer buttons below.
+- Correct: +1 score, green flash, next letter plays. Wrong: −1 life, red flash shows the right letter, next letter.
+- Answer timer: 5 s per letter with a shrinking bar, starting *after* the letter finished playing. Timeout = miss.
+- 0 lives → game over: score, personal best, rank, Turbo leaderboard, "Play again". Unlimited runs per day.
+- Letters A–Z.
+
+**Speed**: letters 1–3 at 10 WPM, then +1 WPM per correct answer (11, 12, 13…); misses don't speed up. Cap 40 WPM.
+→ wpm = min(40, 10 + max(0, score − 2)), score = correct answers so far.
+
+**Wrong options**: random letters until score 10, then similar-sounding letters (Morse patterns that differ by one symbol, e.g. A .- / R .-. / W .--).
+
+**Placement**: same app. Daily / Turbo switch in the header + link `…/morse-app/#turbo`. Shared login, sounds, title screen.
+
+**Leaderboard**: new "Turbo" tab in the 🏆 popup: today's best runs + all-time best (best score per player; tie → whoever reached it first). Also shown at game over.
+
+**Anti-cheat: server-checked** (the database picks letters, checks answers, counts the score)
+- Table `turbo_runs` (player, score, lives, current letter, when it was sent, started/ended).
+- `turbo_start(name, token)` → run id + first letter, options, wpm (starting a new run ends any open run).
+- `turbo_answer(name, token, run_id, choice)` → correct?, right answer, score, lives, game over?, next letter + options + wpm. `choice = null` = timeout.
+- Server enforces the timer: answer later than letter duration + 5 s + ~2 s network slack = miss.
+- `get_turbo_leaderboard(scope 'today' | 'alltime')`, `get_turbo_best(name)`.
+- Known limit: the browser has to receive the letter to play it, so a scripted bot could still read it. Server-checking stops simply *submitting* fake scores.
+- Hiding the page mid-letter most likely costs that letter (the server clock keeps running). Fine for a fast mode.
+
+**Files**: `js/turbo.js` (game + view), Turbo section in `index.html`, header switch, Turbo tab in `js/results.js`, migration `008_turbo.sql` + `schema.sql`.
+**Sounds**: short built-in correct beep / wrong buzz; can be replaced later with `sounds/correct.mp3` / `sounds/wrong.mp3`.
+**Later**: Turbo badges (e.g. score 25 / 50 / 100).
+
+**Build order**: 1) DB migration + PGlite tests (timer, scoring, lives, cheating attempts) → apply to Supabase → verify. 2) Turbo screen + game loop. 3) Header switch + `#turbo` link. 4) Leaderboard tab. 5) Phone-size test.
+- [x] 1. Database: `008_turbo.sql` + `009_turbo_search_path.sql` (advisor fix), tested in PGlite (both paths), applied to Supabase, verified with a rolled-back test run (no test data left)
+- [x] 2. Turbo screen + game loop (`js/turbo.js`): orb, 5 s timer bar (starts after the letter), feedback, lives, game over, personal best + confetti
+- [x] 3. Shared header with Daily / Turbo switch + `#turbo` link (also opens Turbo straight from the title screen)
+- [x] 4. Turbo tab in the 🏆 popup (Today / All-time), also from the game-over screen
+- [x] 5. Tested at phone size, dark + light mode, with a fake server: right/wrong/timeout, game over, new best, mode switching
+- [x] Per-run look: random hue + one of 5 patterns (dots, stripes, rings, grid, cross), light + dark
+- [x] Generated correct/wrong blips (`blip()` in `js/sfx.js`)
+- Leaving Turbo mid-run ends the run (score so far counts). Daily results popup now opens only once per session
+- [ ] User: play it on the phone
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)
