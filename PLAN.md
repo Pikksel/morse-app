@@ -48,6 +48,11 @@ Open http://localhost:8000. **Keep DevTools open with Network → "Disable cache
 
 ---
 
+## Database workflow (since 2026-10-14)
+Claude is connected to Supabase (project `csmbbzeobtrywxbknukn`, "Morse Project") and applies migrations directly.
+Rule: every change is still saved as `supabase/migrations/00N_*.sql` + `schema.sql` (committed), then applied, then verified.
+Security advisor findings "RLS enabled, no policy" + "public SECURITY DEFINER function" are by design (tables locked, functions = the API).
+
 ## Steps
 
 ### 1. Supabase backend
@@ -192,7 +197,7 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Badges page: tapped badge gets a clear "selected" style (tint + glow) that moves to the next tapped badge; browser's sticky tap/focus highlight turned off (keyboard focus ring kept)
 - [x] Daily leaderboard shows everyone who played that day (was top 10, DB max 100). Migration `007_full_daily_leaderboard.sql` (tested in PGlite with 120 players)
 - [x] Table scrolls in its own box with a sticky header and jumps to your own row
-- [ ] **User: run `007_full_daily_leaderboard.sql`** in Supabase (until then the list shows up to 100: still works)
+- [x] Applied `007_full_daily_leaderboard.sql` to Supabase (by Claude via the Supabase connection). Verified: 11 of 11 players today returned, public API OK, security advisor: no new issues
 
 ### 5. Polish
 - [ ] Share button (emoji grid)
