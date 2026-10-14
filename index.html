@@ -147,6 +147,7 @@
         <h2 id="turbo-over-title">Game over</h2>
         <p class="turbo-final"><b id="turbo-final-score">0</b><span>points</span></p>
         <p id="turbo-best" class="hint"></p>
+        <div id="turbo-badges" class="badge-list" hidden></div>
         <div class="actions">
           <button id="turbo-again" type="button" class="play">▶ Play again</button>
           <button id="turbo-board" type="button" class="secondary">🏁 Leaderboard</button>
@@ -173,14 +174,14 @@
     </div>
 
     <h2 id="board-title" class="board-title">Leaderboard</h2>
-    <div class="tabs" role="tablist">
+    <!-- Daily leaderboards (hidden in Turbo, which has its own Today / All-time below) -->
+    <div id="board-tabs" class="tabs" role="tablist">
       <button type="button" role="tab" id="board-today" aria-selected="true">Today</button>
       <button type="button" role="tab" id="board-alltime" aria-selected="false">All-time</button>
-      <button type="button" role="tab" id="board-turbo" aria-selected="false">Turbo</button>
     </div>
-    <div id="turbo-scope" class="scope-switch" hidden>
-      <button type="button" id="turbo-scope-today" aria-pressed="true">Today</button>
-      <button type="button" id="turbo-scope-alltime" aria-pressed="false">All-time</button>
+    <div id="turbo-scope" class="tabs" role="tablist" hidden>
+      <button type="button" role="tab" id="turbo-scope-today" aria-selected="true">Today</button>
+      <button type="button" role="tab" id="turbo-scope-alltime" aria-selected="false">All-time</button>
     </div>
     <div id="board-scroll" class="board-scroll">
       <table class="board">
@@ -195,7 +196,7 @@
       <div id="new-badges-list" class="badge-list"></div>
     </section>
 
-    <p class="countdown">Next word in <b id="countdown"></b></p>
+    <p id="countdown-line" class="countdown">Next word in <b id="countdown"></b></p>
   </dialog>
 
   <!-- Badges: unlocked + locked -->

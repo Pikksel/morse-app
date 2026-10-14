@@ -187,10 +187,14 @@ function resetInput() {
   inPlace = firstEmpty === -1; // all filled: Backspace clears the selected square
 }
 
+// Lets the app know play started or stopped (e.g. for the calm background).
+const notifyState = () => document.dispatchEvent(new Event('morse:state'));
+
 function onPlayClick() {
   if (playing && state.canGuess) return;
   const wpm = useTry(state);
   if (wpm === null) return;
+  notifyState();
   stop(); // cut off the previous try's sound
   sounding = -1;
 
@@ -301,6 +305,7 @@ function submit() {
 
 // restored = true when reopening an already finished game (don't re-submit).
 function finish(restored = false) {
+  notifyState();
   clearInterval(timerId);
   tick();
   stop();
@@ -370,6 +375,9 @@ function wireEvents() {
 }
 
 export const currentState = () => state;
+
+// A word in progress: started (first Play) and not finished yet.
+export const isDailyInProgress = () => !!state && state.status === 'playing' && state.tries > 0;
 
 // owner: the logged-in callsign (each callsign has its own saved game).
 export function initGame({ owner, onFinish } = {}) {

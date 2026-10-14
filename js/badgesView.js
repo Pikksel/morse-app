@@ -23,7 +23,7 @@ function square(id, earnedAt) {
     // Only one badge is selected at a time: the highlight moves to the tapped one.
     $('badge-grid').querySelector('.selected')?.classList.remove('selected');
     el.classList.add('selected');
-    $('badge-detail').textContent = `${icon} ${name}: ${desc}`;
+    $('badge-detail').textContent = desc; // the square already shows icon + name
   });
   return el;
 }

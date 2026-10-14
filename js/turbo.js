@@ -1,7 +1,8 @@
 // Turbo mode: one letter plays once, pick it from three, three lives, faster and faster.
 // The database picks the letters, checks the answers and keeps the score (see turbo_* in schema.sql);
 // this file only plays, shows and sends taps.
-import { turboStart, turboAnswer, getTurboBest } from './api.js';
+import { turboStart, turboAnswer, getTurboBest, awardBadges } from './api.js';
+import { BADGES } from './badges.js';
 import { play, stop } from './morse.js';
 import { playSfx, blip, prepareRandom, playRandom } from './sfx.js';
 import { confetti } from './confetti.js';
@@ -185,6 +186,7 @@ async function startRun() {
     prevBest = (await getTurboBest(player.name))?.alltime ?? 0;
     const start = await turboStart(player.name, player.token);
     run = { id: start.run_id, score: start.score, lives: start.lives };
+    notifyState();
     ask(start.next);
   } catch (err) {
     message(err.message === 'BAD_TOKEN' ? 'Your login has expired. Log out and in again.' : `Couldn't start: ${err.message}`);
@@ -194,11 +196,13 @@ async function startRun() {
 }
 
 async function gameOver(score) {
+  notifyState();
   stop();
   resetTimer();
   showTimer(false);
   run = null;
   current = null;
+  notifyState();
   $('turbo-options').hidden = true;
   $('turbo-final-score').textContent = score;
 
@@ -214,6 +218,7 @@ async function gameOver(score) {
   }
   $('turbo-over').hidden = false;
 
+  showNewBadges();
   $('turbo-best').textContent = 'Loading your best…';
   try {
     const best = await getTurboBest(loadPlayer().name);
@@ -224,7 +229,35 @@ async function gameOver(score) {
   }
 }
 
+// Badges can also be earned in Turbo (e.g. Turbocharged): show new ones in the game-over card.
+async function showNewBadges() {
+  const box = $('turbo-badges');
+  box.hidden = true;
+  box.innerHTML = '';
+  const player = loadPlayer();
+  let ids = [];
+  try { ids = (await awardBadges(player.name, player.token)).filter((id) => BADGES[id]); } catch { return; }
+  if (!ids.length) return;
+  ids.forEach((id, i) => {
+    const { icon, name, desc } = BADGES[id];
+    const card = document.createElement('div');
+    card.className = 'badge-card';
+    card.style.setProperty('--d', `${i * 350}ms`);
+    card.innerHTML = '<span class="badge-icon"></span><div><b class="badge-name"></b><span class="badge-desc"></span></div>';
+    card.querySelector('.badge-icon').textContent = icon;
+    card.querySelector('.badge-name').textContent = `New badge: ${name}`;
+    card.querySelector('.badge-desc').textContent = desc;
+    box.append(card);
+  });
+  box.hidden = false;
+  setTimeout(() => playSfx(ids.map((id) => BADGES[id].sound).find(Boolean) ?? 'badge'), 600);
+}
+
 // ---------- Public ----------
+
+// Lets the app know a run started or ended (e.g. for the calm background).
+const notifyState = () => document.dispatchEvent(new Event('morse:state'));
+export const isTurboRunning = () => !!run;
 
 // Turbo screen became visible: fresh look, ready to start.
 export function enterTurbo({ onOpenLeaderboard } = {}) {
@@ -247,6 +280,7 @@ export function leaveTurbo() {
   run = null;
   current = null;
   answering = false;
+  notifyState();
   document.body.classList.remove('turbo-mode');
 }
 

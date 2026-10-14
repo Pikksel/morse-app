@@ -240,7 +240,7 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] 1. Database: `008_turbo.sql` + `009_turbo_search_path.sql` (advisor fix), tested in PGlite (both paths), applied to Supabase, verified with a rolled-back test run (no test data left)
 - [x] 2. Turbo screen + game loop (`js/turbo.js`): orb, 5 s timer bar (starts after the letter), feedback, lives, game over, personal best + confetti
 - [x] 3. Shared header with Daily / Turbo switch + `#turbo` link (also opens Turbo straight from the title screen)
-- [x] 4. Turbo tab in the 🏆 popup (Today / All-time), also from the game-over screen
+- [x] 4. Turbo leaderboard popup (from 🏁 and the game-over screen). Each mode shows only its own board: Turbo = "🏁 Turbo leaderboard" + Today / All-time; Daily = Today / All-time + next-word countdown (2026-10-14)
 - [x] 5. Tested at phone size, dark + light mode, with a fake server: right/wrong/timeout, game over, new best, mode switching
 - [x] Per-run look: random hue + one of 5 patterns (dots, stripes, rings, grid, cross), light + dark
 - [x] Generated correct/wrong blips (`blip()` in `js/sfx.js`)
@@ -266,6 +266,26 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Morse drawn as shapes (round dot, pill dash, fixed gap) instead of `.`/`-` text, so dashes never merge (O = 3 separate dashes)
 - [x] Fits the narrowest keys: widest code (Q/Y) 27.6 px in a 30.7 px key at 375 px width
 - [x] Light mode keys darker (`--key: #6f6a61`) so white text is readable there too
+
+### 4.18 Calm background when not playing (2026-10-14)
+- [x] `js/ambient.js`: two faint orange glows slowly drifting + up to 12 slow, dim dits/dahs floating up
+- [x] On: login screens, Daily before first Play / finished, Turbo start + game over, any popup (leaderboard, badges)
+- [x] Off (fades out ~1 s): title screen (has its own effects), a Daily word in progress, a Turbo run in progress
+- [x] Games signal play start/stop with a `morse:state` event; `updateAmbient()` in `js/ui.js` decides (also watches screens + popups)
+- [x] No work while off (glows paused, no new particles); reduced-motion: no movement
+- [x] Tested: all 8 on/off transitions through a full session
+
+### 4.19 Badge updates (2026-10-14)
+- [x] Badges page: explanation line shows only the description (square already shows icon + name)
+- [x] Migration `010_badge_updates.sql` (applied by Claude, tested in PGlite on both paths):
+  - Week Champion: #1 on 5 finished days in a row (was 7)
+  - Turtle 🐢: solved after > 8 minutes (was 5)
+  - Streak 7 → Streak 5 🔥 (new id `streak_5`; existing streak_7 badges moved; none existed live)
+  - New 🏠 Time to Go Home: missed the word 2 days in a row
+  - New 🏎️ Turbocharged: played a Turbo run
+- [x] Badges are now also awarded at Turbo game over (new-badge card in the game-over screen)
+- [x] Fixed `schema.sql` order: `turbo_runs` table moved to the top (badge rules reference it; a fresh setup failed before)
+- [ ] User decision: DAW1 (7:03) and SHYT (5:30) earned Turtle under the old 5-min rule. Keep (default) or remove?
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

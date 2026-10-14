@@ -1,11 +1,12 @@
 import { register, login, logout, verifyPlayer, submitScore, awardBadges } from './api.js';
 import { loadPlayer, savePlayer, clearPlayer, NAME_PATTERN, PASSWORD_PATTERN } from './player.js';
-import { initGame, currentState } from './gameView.js';
+import { initGame, currentState, isDailyInProgress } from './gameView.js';
 import { saveState, score, elapsedMs } from './game.js';
 import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
 import { openBadges } from './badgesView.js';
 import { beep, stop } from './morse.js';
-import { enterTurbo, leaveTurbo } from './turbo.js';
+import { enterTurbo, leaveTurbo, isTurboRunning } from './turbo.js';
+import { setAmbient } from './ambient.js';
 import { runSplash } from './splash.js';
 
 const $ = (id) => document.getElementById(id);
@@ -270,6 +271,22 @@ $('sign-out').addEventListener('click', () => {
   setMode('login');
   show('start');
 });
+
+// ---------- Calm background when not playing ----------
+
+// On: menus, popups, before/after a game. Off: title screen (has its own), a word or Turbo run in progress.
+function updateAmbient() {
+  if (!$('splash').hidden) return setAmbient(false);
+  if ($('results').open || $('badges').open) return setAmbient(true);
+  if (!$('turbo').hidden) return setAmbient(!isTurboRunning());
+  if (!$('game').hidden) return setAmbient(!isDailyInProgress());
+  setAmbient(true); // login / new player screens
+}
+document.addEventListener('morse:state', updateAmbient);
+// Screens switching and popups opening/closing also change it.
+const watch = new MutationObserver(updateAmbient);
+for (const id of ['splash', 'start', 'saved', 'game', 'turbo']) watch.observe($(id), { attributes: true, attributeFilter: ['hidden'] });
+for (const id of ['results', 'badges']) watch.observe($(id), { attributes: true, attributeFilter: ['open'] });
 
 // ---------- Boot ----------
 

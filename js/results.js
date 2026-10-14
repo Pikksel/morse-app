@@ -83,10 +83,14 @@ async function loadBoard() {
   const note = $('board-note');
   $('board-today').setAttribute('aria-selected', tab === 'today');
   $('board-alltime').setAttribute('aria-selected', tab === 'alltime');
-  $('board-turbo').setAttribute('aria-selected', tab === 'turbo');
-  $('turbo-scope').hidden = tab !== 'turbo';
-  $('turbo-scope-today').setAttribute('aria-pressed', turboScope === 'today');
-  $('turbo-scope-alltime').setAttribute('aria-pressed', turboScope === 'alltime');
+  // Each mode shows only its own leaderboard: Daily = Today / All-time tabs, Turbo = its own switch.
+  const turbo = tab === 'turbo';
+  $('board-tabs').hidden = turbo;
+  $('turbo-scope').hidden = !turbo;
+  $('board-title').textContent = turbo ? '🏁 Turbo leaderboard' : 'Leaderboard';
+  $('countdown-line').hidden = turbo; // "Next word" is about the daily word
+  $('turbo-scope-today').setAttribute('aria-selected', turboScope === 'today');
+  $('turbo-scope-alltime').setAttribute('aria-selected', turboScope === 'alltime');
   body.innerHTML = '';
   note.textContent = 'Loading…';
 
@@ -175,7 +179,7 @@ function tickCountdown() {
 // ---------- Public ----------
 
 // state: today's game (summary shown only if finished). name: the logged-in callsign.
-// tab: which leaderboard to show first ('today' | 'alltime' | 'turbo').
+// tab: 'today' | 'alltime' (Daily leaderboards) or 'turbo' (only the Turbo leaderboard).
 export function openResults(state, name, { tab: startTab = 'today' } = {}) {
   me = name;
   paintSummary(state);
@@ -213,6 +217,5 @@ $('results').addEventListener('click', (e) => {
 });
 $('board-today').addEventListener('click', () => { tab = 'today'; loadBoard(); });
 $('board-alltime').addEventListener('click', () => { tab = 'alltime'; loadBoard(); });
-$('board-turbo').addEventListener('click', () => { tab = 'turbo'; loadBoard(); });
 $('turbo-scope-today').addEventListener('click', () => { turboScope = 'today'; loadBoard(); });
 $('turbo-scope-alltime').addEventListener('click', () => { turboScope = 'alltime'; loadBoard(); });

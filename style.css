@@ -426,19 +426,6 @@ button.link {
 }
 .mode-switch button[aria-selected="true"] { color: var(--accent-text); background: var(--accent); }
 
-/* Turbo tab: Today / All-time */
-.scope-switch { display: flex; justify-content: center; gap: 16px; }
-.scope-switch button {
-  padding: 2px 4px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
-  background: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-}
-.scope-switch button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); }
-
 /* ---------- Turbo screen ---------- */
 
 #turbo > * + * { margin-top: 14px; }
@@ -516,6 +503,7 @@ button.link {
 .turbo-over { display: grid; gap: 10px; text-align: center; }
 .turbo-over h2 { margin: 0; }
 .turbo-over .actions button { white-space: nowrap; padding-inline: 8px; }
+.turbo-over .badge-card { text-align: left; }
 .turbo-final { margin: 0; display: grid; line-height: 1; }
 .turbo-final b { font-family: 'Orbitron', var(--mono); font-size: 3.4rem; color: var(--accent); }
 .turbo-final span { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }
@@ -543,6 +531,56 @@ body.turbo-mode::before {
   animation: theme-in 0.7s ease;
 }
 @keyframes theme-in { from { opacity: 0; } }
+
+/* ---------- Calm background when not playing (js/ambient.js) ---------- */
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;            /* behind everything, above the Turbo color layer */
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.ambient.on { opacity: 1; }
+
+/* Two big, very faint glows that slowly drift and breathe */
+.amb-glow {
+  position: absolute;
+  width: 75vmax;
+  height: 75vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%);
+  animation: amb-drift-a 26s ease-in-out infinite alternate;
+}
+.amb-glow.a { left: -30vmax; top: -25vmax; }
+.amb-glow.b { right: -35vmax; bottom: -30vmax; animation-name: amb-drift-b; animation-duration: 34s; }
+.ambient:not(.on) .amb-glow { animation-play-state: paused; } /* no work while hidden */
+@keyframes amb-drift-a {
+  to { transform: translate(18vw, 14vh) scale(1.18); }
+}
+@keyframes amb-drift-b {
+  to { transform: translate(-16vw, -12vh) scale(0.9); }
+}
+
+/* A few slow, dim dits and dahs (same float as the title screen, but calmer) */
+.amb-particle {
+  --op: 0.4;
+  position: absolute;
+  bottom: -20px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation-name: float-up;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+.amb-particle.dit { width: 6px; height: 6px; }
+.amb-particle.dah { width: 18px; height: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .amb-glow { animation: none; }
+}
 
 /* ---------- Header actions ---------- */
 

@@ -31,6 +31,24 @@ create table if not exists public.scores (
   unique (player_id, day)
 );
 
+-- Turbo runs (one row per Turbo game; see the Turbo section for how it is played)
+create table if not exists public.turbo_runs (
+  id              uuid primary key default gen_random_uuid(),
+  player_id       uuid not null references public.players(id) on delete cascade,
+  started_at      timestamptz not null default now(),
+  ended_at        timestamptz,                 -- null while playing (or abandoned)
+  score           int not null default 0,
+  lives           int not null default 3,
+  letters         int not null default 0,      -- letters served so far
+  current_letter  text,
+  current_wpm     int,
+  sent_at         timestamptz                  -- when the current letter was sent
+);
+create index if not exists turbo_runs_player_idx on public.turbo_runs (player_id);
+create index if not exists turbo_runs_started_idx on public.turbo_runs (started_at);
+alter table public.turbo_runs enable row level security;
+revoke all on public.turbo_runs from anon, authenticated;
+
 -- RLS on, no policies: the browser can't read or write tables directly.
 -- Everything goes through the functions below.
 alter table public.players enable row level security;
@@ -272,6 +290,11 @@ as $$
     select count(*) as len
     from (select day - (row_number() over (order by day))::int as grp from tops) t
     group by grp
+  ),
+  miss_runs as (                                        -- missed the word (26) on consecutive days
+    select count(*) as len
+    from (select day - (row_number() over (order by day))::int as grp from mine where guesses = 26) t
+    group by grp
   )
   select 'first_contact'  where (select count(*) from mine) >= 1
   union all select 'regular'       where (select count(*) from mine) >= 5
@@ -280,11 +303,13 @@ as $$
   union all select 'speed_demon'   where exists (select 1 from mine where guesses <= 4)
   union all select 'qrq'           where exists (select 1 from mine where guesses = 1)
   union all select 'never_give_up' where exists (select 1 from mine where guesses between 23 and 25)
-  union all select 'turtle'        where exists (select 1 from mine where guesses <= 25 and time_ms > 300000)
-  union all select 'streak_7'      where exists (select 1 from play_runs where len >= 7)
+  union all select 'turtle'        where exists (select 1 from mine where guesses <= 25 and time_ms > 480000)
+  union all select 'streak_5'      where exists (select 1 from play_runs where len >= 5)
   union all select 'streak_30'     where exists (select 1 from play_runs where len >= 30)
   union all select 'top_band'      where exists (select 1 from tops)
-  union all select 'week_champion' where exists (select 1 from top_runs where len >= 7)
+  union all select 'week_champion' where exists (select 1 from top_runs where len >= 5)
+  union all select 'time_to_go_home' where exists (select 1 from miss_runs where len >= 2)
+  union all select 'turbocharged'  where exists (select 1 from public.turbo_runs where player_id = p_player)
 $$;
 revoke execute on function public._badges_earned(uuid) from public, anon, authenticated;
 
@@ -329,22 +354,6 @@ to anon, authenticated;
 
 -- ---------- Turbo mode (server-checked: the DB picks letters, checks answers, keeps the score) ----------
 
-create table if not exists public.turbo_runs (
-  id              uuid primary key default gen_random_uuid(),
-  player_id       uuid not null references public.players(id) on delete cascade,
-  started_at      timestamptz not null default now(),
-  ended_at        timestamptz,                 -- null while playing (or abandoned)
-  score           int not null default 0,
-  lives           int not null default 3,
-  letters         int not null default 0,      -- letters served so far
-  current_letter  text,
-  current_wpm     int,
-  sent_at         timestamptz                  -- when the current letter was sent
-);
-create index if not exists turbo_runs_player_idx on public.turbo_runs (player_id);
-create index if not exists turbo_runs_started_idx on public.turbo_runs (started_at);
-alter table public.turbo_runs enable row level security;
-revoke all on public.turbo_runs from anon, authenticated;
 
 -- ---------- Helpers (not callable from the browser) ----------
 
