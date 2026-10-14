@@ -3,6 +3,7 @@
 // this file only plays, shows and sends taps.
 import { turboStart, turboAnswer, getTurboBest, awardBadges } from './api.js';
 import { BADGES } from './badges.js';
+import { revealSequence } from './badgeReveal.js';
 import { play, stop } from './morse.js';
 import { playSfx, blip, prepareRandom, playRandom } from './sfx.js';
 import { confetti } from './confetti.js';
@@ -176,6 +177,7 @@ async function answer(choice) {
 async function startRun() {
   const player = loadPlayer();
   if (!player) return;
+  cancelReveal(); // badges from the last game over still waiting
   newSessionLook();
   prepareRandom('turboFail'); // load this run's game-over sound now, so it plays instantly
   $('turbo-intro').hidden = true;
@@ -229,28 +231,24 @@ async function gameOver(score) {
   }
 }
 
-// Badges can also be earned in Turbo (e.g. Turbocharged): show new ones in the game-over card.
+// Badges can also be earned in Turbo (e.g. Turbocharged): shown one at a time in the game-over card.
+let cancelReveal = () => {};
 async function showNewBadges() {
+  cancelReveal();
   const box = $('turbo-badges');
   box.hidden = true;
   box.innerHTML = '';
   const player = loadPlayer();
   let ids = [];
   try { ids = (await awardBadges(player.name, player.token)).filter((id) => BADGES[id]); } catch { return; }
-  if (!ids.length) return;
-  ids.forEach((id, i) => {
-    const { icon, name, desc } = BADGES[id];
-    const card = document.createElement('div');
-    card.className = 'badge-card';
-    card.style.setProperty('--d', `${i * 350}ms`);
-    card.innerHTML = '<span class="badge-icon"></span><div><b class="badge-name"></b><span class="badge-desc"></span></div>';
-    card.querySelector('.badge-icon').textContent = icon;
-    card.querySelector('.badge-name').textContent = `New badge: ${name}`;
-    card.querySelector('.badge-desc').textContent = desc;
-    box.append(card);
-  });
+  if (!ids.length || run) return; // nothing new, or a new run already started
   box.hidden = false;
-  setTimeout(() => playSfx(ids.map((id) => BADGES[id].sound).find(Boolean) ?? 'badge'), 600);
+  setTimeout(() => {
+    cancelReveal = revealSequence(box, ids, {
+      prefix: 'New badge: ',
+      stillShowing: () => !$('turbo').hidden && !$('turbo-over').hidden && !run, // still on this game over
+    });
+  }, 600);
 }
 
 // ---------- Public ----------
@@ -280,6 +278,7 @@ export function leaveTurbo() {
   run = null;
   current = null;
   answering = false;
+  cancelReveal();
   notifyState();
   document.body.classList.remove('turbo-mode');
 }

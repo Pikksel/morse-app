@@ -286,6 +286,7 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Badges are now also awarded at Turbo game over (new-badge card in the game-over screen)
 - [x] Fixed `schema.sql` order: `turbo_runs` table moved to the top (badge rules reference it; a fresh setup failed before)
 - [ ] User decision: DAW1 (7:03) and SHYT (5:30) earned Turtle under the old 5-min rule. Keep (default) or remove?
+- [x] New badges revealed one at a time, 2 s apart, each with its pop-in animation and `sounds/new-badge.mp3` (First Contact keeps `first-time.mp3`). Shared `js/badgeReveal.js` for Daily popup + Turbo game over; stops if the screen closes. `badge.mp3` retired (too big)
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

@@ -2,7 +2,7 @@
 const sounds = {
   win: new Audio('sounds/win.mp3'),
   fail: new Audio('sounds/fail.mp3'),
-  badge: new Audio('sounds/badge.mp3'),
+  newBadge: new Audio('sounds/new-badge.mp3'), // each new badge (badge.mp3 retired: too big)
   firstContact: new Audio('sounds/first-time.mp3'), // First Contact badge
   enter: new Audio('sounds/enter.mp3'), // title screen PLAY
 };
