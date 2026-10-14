@@ -1,7 +1,7 @@
 // Game screen: 5 squares, tries meter, Play button, guess history, keyboard.
 import {
   WORD_LENGTH, MAX_TRIES, BLANK, dailyWord, wpmForTry, evaluate, knownLetters,
-  loadState, saveState, useTry, addGuess, elapsedMs, formatTime,
+  loadState, saveState, useTry, addGuess, elapsedMs, formatTime, pauseTimer, resumeTimer,
 } from './game.js';
 import { MORSE, play, stop, tone } from './morse.js';
 import { playSfx } from './sfx.js';
@@ -336,6 +336,17 @@ function wireEvents() {
   if (wired) return;
   wired = true;
 
+  // Pause the timer while the page isn't visible; resume when it is.
+  document.addEventListener('visibilitychange', () => {
+    if (!state) return;
+    if (document.hidden) {
+      pauseTimer(state);
+    } else {
+      resumeTimer(state);
+      tick();
+    }
+  });
+
   $('play').addEventListener('click', onPlayClick);
   $('guess').addEventListener('click', () => handleKey('Enter'));
   $('word').addEventListener('click', onSquareClick);
@@ -372,6 +383,7 @@ export function initGame({ owner, onFinish } = {}) {
 
   resetInput();
 
+  if (!document.hidden) resumeTimer(state); // left while hidden and the page was closed
   startTimer();
   if (state.status !== 'playing') return finish(true);
 

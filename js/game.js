@@ -60,6 +60,8 @@ function newState(day, owner) {
     status: 'playing', // 'playing' | 'won' | 'lost'
     startedAt: null,
     finishedAt: null,
+    pausedMs: 0,       // time spent away from the page (doesn't count)
+    pausedAt: null,    // set while the page is hidden
     submitted: false,  // score saved on the server (or can't be: other device / day over)
     rank: null,        // rank today, from submit_score
   };
@@ -110,9 +112,27 @@ export function score(state) {
   return state.status === 'won' ? state.tries : MAX_TRIES + 1;
 }
 
+// Active playing time: wall-clock time minus time spent away from the page.
 export function elapsedMs(state) {
   if (!state.startedAt) return 0;
-  return (state.finishedAt ?? Date.now()) - state.startedAt;
+  const end = state.finishedAt ?? Date.now();
+  const away = (state.pausedMs ?? 0) + (state.pausedAt ? end - state.pausedAt : 0);
+  return end - state.startedAt - away;
+}
+
+// Page hidden (phone locked, other tab, app switched): stop the clock.
+export function pauseTimer(state) {
+  if (state.status !== 'playing' || !state.startedAt || state.pausedAt) return;
+  state.pausedAt = Date.now();
+  saveState(state);
+}
+
+// Page visible again (also after the browser closed the page while away): add the away-time.
+export function resumeTimer(state) {
+  if (!state.pausedAt) return;
+  state.pausedMs = (state.pausedMs ?? 0) + (Date.now() - state.pausedAt);
+  state.pausedAt = null;
+  saveState(state);
 }
 
 export function formatTime(ms) {

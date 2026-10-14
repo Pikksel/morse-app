@@ -199,6 +199,13 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Table scrolls in its own box with a sticky header and jumps to your own row
 - [x] Applied `007_full_daily_leaderboard.sql` to Supabase (by Claude via the Supabase connection). Verified: 11 of 11 players today returned, public API OK, security advisor: no new issues
 
+### 4.14 Pause when away (2026-10-14)
+- [x] Timer pauses while the page is hidden (phone locked, other tab/app) via `visibilitychange`; resumes when visible
+- [x] Away-time saved in the game state (`pausedMs`, `pausedAt`), so it also works if the browser closes the page while away
+- [x] Saved time / leaderboard time = active playing time only
+- [x] Tested: fake-clock unit test in Node (10 s + 60 s away + 5 s = 15 s; 1 h closed = 0 s) + browser event test
+- Trade-off: players could step away to think (they can't hear the word while away; time is only the tie-breaker)
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)
