@@ -260,6 +260,12 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Ring hit sometimes pings: `sounds/sonar.mp3`, ~1 in 3 hits (SONAR_CHANCE), never within 2 s of the last (SONAR_COOLDOWN_MS), pitch ±6%, 45% volume
 - Tune in `js/splash.js`: RIPPLE_RADIUS, RIPPLE_MS (must match `.ripple` 1.5s in style.css), RIPPLE_RINGS, AMBIENT, MAX_PARTICLES, PER_TAP
 
+### 4.17 Daily keyboard readability (2026-10-14)
+- [x] Letters bigger (1.4rem) and white; keys a bit taller (62 px)
+- [x] Morse drawn as shapes (round dot, pill dash, fixed gap) instead of `.`/`-` text, so dashes never merge (O = 3 separate dashes)
+- [x] Fits the narrowest keys: widest code (Q/Y) 27.6 px in a 30.7 px key at 375 px width
+- [x] Light mode keys darker (`--key: #6f6a61`) so white text is readable there too
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)

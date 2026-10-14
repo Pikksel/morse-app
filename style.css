@@ -9,7 +9,8 @@
   --error: #c0392b;
   --correct: #4a9d5b;
   --absent: #7c7f84;
-  --key: #e4dfd3;
+  --key: #6f6a61;      /* dark enough for white key text in light mode too */
+  --key-text: #ffffff;
   --splash-a: #fff4e6;
   --splash-b: #efe6d6;
   --splash-glow: rgb(217 130 43 / 0.28);
@@ -30,6 +31,7 @@
     --correct: #3f8a4f;
     --absent: #2b2e32;
     --key: #50555c;
+    --key-text: #ffffff;
     --splash-a: #1e2244;
     --splash-b: #111215;
     --splash-glow: rgb(240 160 75 / 0.2);
@@ -934,24 +936,32 @@ button.badge {
 .key {
   flex: 1;
   max-width: 44px;
-  height: 58px;
+  height: 62px;
   padding: 0;
   display: grid;
   place-content: center;
-  gap: 2px;
-  color: var(--text);
+  justify-items: center;
+  gap: 3px;
+  color: var(--key-text);
   background: var(--key);
   border-radius: 6px;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.4rem;
+  line-height: 1;
 }
+/* Morse under each letter, drawn as shapes. Sizes in em, so they scale with the key text;
+   the widest code (Q – – • –) still fits a 31 px key. */
 .key small {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  font-weight: 400;
-  opacity: 0.8;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 0.14em;
+  height: 0.4em;
 }
-.key.wide { max-width: 66px; flex: 1.5; font-size: 0.8rem; }
+.key small i { display: block; height: 0.3em; border-radius: 999px; background: currentColor; }
+.key small .dit { width: 0.3em; }
+.key small .dah { width: 0.56em; }
+.key.wide { max-width: 66px; flex: 1.5; font-size: 1.3rem; }
 
 @media (prefers-reduced-motion: reduce) {
   .flip, .shake { animation: none; }

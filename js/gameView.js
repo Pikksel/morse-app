@@ -65,7 +65,9 @@ function buildKeyboard() {
         btn.classList.add('wide');
       } else {
         btn.dataset.key = k;
-        btn.innerHTML = `<span>${k}</span><small>${MORSE[k]}</small>`;
+        // Morse drawn as shapes (round dot / pill dash) with a fixed gap, so dashes never merge
+        const morse = [...MORSE[k]].map((s) => `<i class="${s === '.' ? 'dit' : 'dah'}"></i>`).join('');
+        btn.innerHTML = `<span>${k}</span><small aria-hidden="true">${morse}</small>`;
       }
       row.append(btn);
     }
