@@ -182,8 +182,8 @@ begin
 end;
 $$;
 
--- Top N for one day: fewest guesses, then fastest.
-create or replace function public.get_daily_leaderboard(p_day date, p_limit int default 10)
+-- One day's leaderboard: fewest tries, then fastest. Everyone by default (p_limit null).
+create or replace function public.get_daily_leaderboard(p_day date, p_limit int default null)
 returns table (rank bigint, name text, guesses int, time_ms int)
 language sql stable security definer
 set search_path = public
@@ -192,7 +192,7 @@ as $$
   from public.scores s join public.players p on p.id = s.player_id
   where s.day = p_day
   order by s.guesses, s.time_ms
-  limit least(p_limit, 100)
+  limit p_limit   -- null = everyone who played that day
 $$;
 
 -- A player's current rank for a day (null if they have no score that day).

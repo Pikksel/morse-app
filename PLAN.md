@@ -188,6 +188,12 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] `sounds/enter.mp3` added
 - [x] VIP sounds: USSR → `sounds/USSR.mp3`, RM1 → `sounds/RM1.mp3` on the PLAY tap (`PLAYER_SOUNDS` in `js/sfx.js`; loaded only for that player). Add more players/sounds (win, fail, badge…) in the same list
 
+### 4.13 Fixes (2026-10-14)
+- [x] Badges page: tapped badge gets a clear "selected" style (tint + glow) that moves to the next tapped badge; browser's sticky tap/focus highlight turned off (keyboard focus ring kept)
+- [x] Daily leaderboard shows everyone who played that day (was top 10, DB max 100). Migration `007_full_daily_leaderboard.sql` (tested in PGlite with 120 players)
+- [x] Table scrolls in its own box with a sticky header and jumps to your own row
+- [ ] **User: run `007_full_daily_leaderboard.sql`** in Supabase (until then the list shows up to 100: still works)
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)

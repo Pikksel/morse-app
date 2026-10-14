@@ -121,10 +121,12 @@
       <button type="button" role="tab" id="board-today" aria-selected="true">Today</button>
       <button type="button" role="tab" id="board-alltime" aria-selected="false">All-time</button>
     </div>
-    <table class="board">
-      <thead id="board-head"></thead>
-      <tbody id="board-body"></tbody>
-    </table>
+    <div id="board-scroll" class="board-scroll">
+      <table class="board">
+        <thead id="board-head"></thead>
+        <tbody id="board-body"></tbody>
+      </table>
+    </div>
     <p id="board-note" class="hint"></p>
 
     <section id="new-badges" class="new-badges" hidden aria-live="polite">

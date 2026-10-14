@@ -20,6 +20,9 @@ function square(id, earnedAt) {
   el.querySelector('.sq-name').textContent = name;
   el.querySelector('.sq-state').textContent = earnedAt ? `Unlocked ${shortDate(earnedAt)}` : 'LOCKED';
   el.addEventListener('click', () => {
+    // Only one badge is selected at a time: the highlight moves to the tapped one.
+    $('badge-grid').querySelector('.selected')?.classList.remove('selected');
+    el.classList.add('selected');
     $('badge-detail').textContent = `${icon} ${name}: ${desc}`;
   });
   return el;

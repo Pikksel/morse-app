@@ -42,7 +42,8 @@ export const getBadges = (name) =>
 export const getRank = (name, day) =>
   rpc('get_rank', { p_name: name, p_day: day });
 
-export const getDailyLeaderboard =(day, limit = 10) =>
+// Everyone who played that day (limit = null), or the top N.
+export const getDailyLeaderboard = (day, limit = null) =>
   rpc('get_daily_leaderboard', { p_day: day, p_limit: limit });
 
 export const getAlltimeLeaderboard = (limit = 10) =>

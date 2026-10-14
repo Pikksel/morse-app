@@ -69,6 +69,13 @@ function head(cells) {
   return tr;
 }
 
+// Long lists scroll inside their own box: bring your row into view (without scrolling the popup).
+function scrollToMe() {
+  const box = $('board-scroll');
+  const mine = $('board-body').querySelector('tr.me');
+  box.scrollTop = mine ? mine.offsetTop - box.clientHeight / 2 + mine.offsetHeight : 0;
+}
+
 async function loadBoard() {
   const body = $('board-body');
   const note = $('board-note');
@@ -87,6 +94,7 @@ async function loadBoard() {
         body.append(row([r.rank, r.name, triesText(r.guesses), formatTime(r.time_ms)], r.name === me));
       }
       note.textContent = rows.length ? '' : 'No scores yet today. Be the first!';
+      scrollToMe();
     } else {
       $('board-head').replaceChildren(head(['#', 'Call', 'Games', 'Avg tries']));
       const rows = await getAlltimeLeaderboard();

@@ -393,6 +393,18 @@ button.icon-btn {
 
 .board-title { padding-right: 32px; }
 
+/* The table scrolls inside its own box; the header row stays visible */
+.board-scroll {
+  max-height: 42dvh;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+.board thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
 .board {
   width: 100%;
   border-collapse: collapse;
@@ -440,6 +452,17 @@ button.icon-btn {
   cursor: pointer;
 }
 .badge-square:not(.locked) { border-color: var(--accent); }
+
+/* No sticky browser highlight after a tap; only .selected marks the chosen badge */
+.badge-square { -webkit-tap-highlight-color: transparent; transition: transform 0.12s, box-shadow 0.12s; }
+.badge-square:focus { outline: none; }
+.badge-square:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; } /* keyboard users */
+.badge-square.selected {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg));
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 14px var(--accent);
+  transform: scale(1.04);
+}
 
 .sq-icon { font-size: 2.2rem; line-height: 1.1; }
 .sq-name { font-size: 0.8rem; font-weight: 700; line-height: 1.2; text-align: center; }
