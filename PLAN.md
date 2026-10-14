@@ -251,13 +251,14 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 
 ### 4.16 Title screen: underwater effects (2026-10-14)
 - [x] Tap outside the PLAY ring: 3 CSS ripple rings (thick → thin → faint), steady speed
-- [x] Ripple hits the PLAY ring → ring glows + wobbles at the exact moment (timing from distance; tested: predicted 895 ms, fired 896 ms)
+- [x] Ripple hits the PLAY ring → reacts at the exact moment (timing from distance; tested: predicted 895 ms, fired 896 ms)
 - [x] Floating dits & dahs drifting up: 8 ambient, +2 per tap, max 40; removed at the top
 - [x] Two depth layers: front = small + bright, deep = bigger, darker, blurred, slower ("under the water")
 - [x] Parallax: layers shift with mouse (desktop) / tilt (Android; iPhone needs a permission prompt, so it stays still)
 - [x] Everything stops after PLAY (no background work); reduced-motion users get no particles
 - [x] Tap sound `sounds/enter-tap.mp3`: one per tap, random pitch ±12%, always ≥5% away from the previous tap, 4 players so quick taps overlap, 50% volume (`PITCHED_SOUNDS` in `js/sfx.js`)
-- [x] Ring hit sometimes pings: `sounds/sonar.mp3`, ~1 in 3 hits (SONAR_CHANCE), never within 2 s of the last (SONAR_COOLDOWN_MS), pitch ±6%, 45% volume
+- [x] Ring hit sound: `sounds/play-shimmer.mp3` on every hit (min 0.3 s apart), pitch ±8%, 35% volume. (Sonar ping tried and dropped; `sounds/sonar.mp3` kept for later)
+- [x] Ring hit animation: smaller bump (1.5%) + a band of light and shadow sweeps through the Morse dashes, entering from the side the ripple came from (SVG gradient `#ring-shine` + `animateTransform`, overlay circle with the same dashes)
 - Tune in `js/splash.js`: RIPPLE_RADIUS, RIPPLE_MS (must match `.ripple` 1.5s in style.css), RIPPLE_RINGS, AMBIENT, MAX_PARTICLES, PER_TAP
 
 ### 4.17 Daily keyboard readability (2026-10-14)

@@ -14,6 +14,8 @@
   --splash-a: #fff4e6;
   --splash-b: #efe6d6;
   --splash-glow: rgb(217 130 43 / 0.28);
+  --ring-light: #fff3d6;
+  --ring-shadow: #6b3a10;
   --radius: 10px;
   --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
@@ -35,6 +37,8 @@
     --splash-a: #1e2244;
     --splash-b: #111215;
     --splash-glow: rgb(240 160 75 / 0.2);
+    --ring-light: #fff6e0;
+    --ring-shadow: #4a2a0c;
   }
 }
 
@@ -358,10 +362,15 @@ button.link {
   to   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
 
-/* A ripple reaches the PLAY ring: it glows and wobbles */
+/* A ripple reaches the PLAY ring: a small bump, and light + shadow sweep through the dashes */
 .splash-play.hit { animation: ring-hit 0.55s ease-out; }
 @keyframes ring-hit {
-  30% { transform: scale(1.045); filter: brightness(1.35) drop-shadow(0 0 14px var(--accent)); }
+  30% { transform: scale(1.015); filter: brightness(1.15); }
+}
+.ring-shine { fill: none; stroke-linecap: round; opacity: 0; pointer-events: none; }
+.ring-shine.on { animation: shine-fade 0.9s ease-in-out; }
+@keyframes shine-fade {
+  15%, 80% { opacity: 1; }
 }
 
 /* After the tap: ring flies outward, word fades, then the whole screen fades away */
@@ -391,7 +400,7 @@ button.link {
 
 @media (prefers-reduced-motion: reduce) {
   .splash, .splash-ring, .splash-word { animation: none; }
-  .particle, .splash-play.hit { animation: none; }
+  .particle, .splash-play.hit, .ring-shine.on { animation: none; }
   .ripple { animation-duration: 0.6s; }
   .splash.leaving .splash-ring, .splash.leaving .splash-word { animation: none; opacity: 0; }
   .screen-enter { animation-duration: 0.3s; }

@@ -96,7 +96,7 @@ export function playRandom(name) {
 // range: max pitch change (0.12 = ±12%), minStep: always at least this far from the previous pitch.
 const PITCHED_SOUNDS = {
   tap: { file: 'sounds/enter-tap.mp3', range: 0.12, minStep: 0.05, volume: 0.5 },
-  sonar: { file: 'sounds/sonar.mp3', range: 0.06, minStep: 0.02, volume: 0.45 }, // subtle wobble
+  shimmer: { file: 'sounds/play-shimmer.mp3', range: 0.08, minStep: 0.03, volume: 0.35 }, // ring hit
 };
 const pitchedPool = {};   // a few players per sound, so quick taps can overlap
 const lastRate = {};

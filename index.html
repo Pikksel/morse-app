@@ -23,8 +23,22 @@
     </div>
     <button id="splash-play" type="button" class="splash-play" aria-label="Play">
       <svg class="splash-ring" viewBox="0 0 260 260" aria-hidden="true">
+        <defs>
+          <!-- A band of shadow, then light, that sweeps across the ring when a ripple hits it -->
+          <linearGradient id="ring-shine" gradientUnits="userSpaceOnUse" x1="0" y1="130" x2="260" y2="130">
+            <stop offset="0" style="stop-color: var(--accent)" />
+            <stop offset="0.36" style="stop-color: var(--accent)" />
+            <stop offset="0.44" style="stop-color: var(--ring-shadow)" />
+            <stop offset="0.53" style="stop-color: var(--ring-light)" />
+            <stop offset="0.62" style="stop-color: var(--accent)" />
+            <stop offset="1" style="stop-color: var(--accent)" />
+            <animateTransform id="ring-shine-sweep" attributeName="gradientTransform" type="translate"
+                              from="-260 0" to="260 0" dur="0.9s" begin="indefinite" fill="freeze" additive="sum" />
+          </linearGradient>
+        </defs>
         <circle cx="130" cy="130" r="118" class="ring-track" />
         <circle id="splash-ring" cx="130" cy="130" r="118" class="ring-morse" stroke-width="5" />
+        <circle id="splash-ring-shine" cx="130" cy="130" r="118" class="ring-shine" stroke-width="5" stroke="url(#ring-shine)" />
       </svg>
       <span class="splash-word">PLAY</span>
     </button>

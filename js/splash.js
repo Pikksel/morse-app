@@ -42,6 +42,7 @@ function buildRing() {
     }
   });
   circle.setAttribute('stroke-dasharray', dashes.join(' '));
+  $('splash-ring-shine').setAttribute('stroke-dasharray', dashes.join(' ')); // overlay uses the same dashes
 }
 
 // ---------- Water ripples (tap anywhere outside the PLAY ring) ----------
@@ -50,9 +51,8 @@ const RIPPLE_RADIUS = 280;   // px a ripple grows to
 const RIPPLE_MS = 1500;      // how long it takes (grows at a steady speed, see .ripple in style.css)
 const RIPPLE_RINGS = 3;      // rings per tap: thick → thin → faint
 const RIPPLE_GAP_MS = 170;   // delay between those rings
-const SONAR_CHANCE = 0.35;   // a ring hit plays the sonar ping about 1 in 3 times…
-const SONAR_COOLDOWN_MS = 2000; // …and never within 2 s of the previous ping
-let lastSonar = 0;
+const SHIMMER_COOLDOWN_MS = 300; // ring-hit sound: every hit, but rapid taps don't stack
+let lastShimmer = 0;
 
 function ripple(x, y) {
   for (let i = 0; i < RIPPLE_RINGS; i++) {
@@ -78,21 +78,36 @@ function ringHitLater(x, y) {
   const distance = Math.abs(Math.hypot(x - cx, y - cy) - ringRadius); // to the nearest point of the ring
   if (distance > RIPPLE_RADIUS) return; // fades out before it gets there
   setTimeout(() => {
+    if ($('splash').classList.contains('leaving')) return; // PLAY already tapped
     const play = $('splash-play');
     play.classList.remove('hit');
     void play.offsetWidth; // restart the animation
     play.classList.add('hit');
-    maybeSonar();
+    shineFrom(x, y);
+    const now = performance.now();
+    if (now - lastShimmer > SHIMMER_COOLDOWN_MS) {
+      lastShimmer = now;
+      playPitched('shimmer');
+    }
   }, (distance / RIPPLE_RADIUS) * RIPPLE_MS);
 }
 
-// Sometimes the ring answers with a sonar ping: random, and never stacked on top of the last one.
-function maybeSonar() {
-  if ($('splash').classList.contains('leaving')) return; // PLAY already tapped
-  const now = performance.now();
-  if (now - lastSonar < SONAR_COOLDOWN_MS || Math.random() > SONAR_CHANCE) return;
-  lastSonar = now;
-  playPitched('sonar');
+// Light and shadow sweep through the Morse dashes, entering from the side the ripple came from:
+// the ring's calm glow is briefly "disrupted".
+function shineFrom(x, y) {
+  const svg = document.querySelector('.splash-ring');
+  const box = svg.getBoundingClientRect();
+  const toRipple = Math.atan2(y - (box.top + box.height / 2), x - (box.left + box.width / 2)) * 180 / Math.PI;
+  const m = new DOMMatrix(getComputedStyle(svg).transform); // the ring is slowly spinning
+  const spin = Math.atan2(m.b, m.a) * 180 / Math.PI;
+  // The gradient's band moves along its own x axis: point that axis away from the ripple.
+  const angle = toRipple - spin + 180;
+  $('ring-shine').setAttribute('gradientTransform', `rotate(${angle.toFixed(1)} 130 130)`);
+  $('ring-shine-sweep').beginElement();
+  const shine = $('splash-ring-shine');
+  shine.classList.remove('on');
+  void shine.getBoundingClientRect(); // restart the fade
+  shine.classList.add('on');
 }
 
 // ---------- Floating dits and dahs ----------
