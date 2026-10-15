@@ -1,5 +1,6 @@
 // Badge names, icons and descriptions. The rules live in the database (_badges_earned in schema.sql);
 // ids here must match the ids it returns. `sound` (optional) = a key in sfx.js, else the default badge sound.
+// mode 'easy' = a 🐣 Easy badge (only Easy games count); the rest are Normal badges.
 export const BADGES = {
   first_contact: { icon: '📡', name: 'First Contact',   desc: 'Played your first game', sound: 'firstContact' },
   regular:       { icon: '🎧', name: 'Regular',         desc: '5 games played' },
@@ -15,4 +16,14 @@ export const BADGES = {
   week_champion: { icon: '👑', name: 'Week Champion',   desc: '#1 five days in a row' },
   time_to_go_home: { icon: '🏠', name: 'Time to Go Home', desc: 'Missed the word 2 days in a row' },
   turbocharged:  { icon: '🏎️', name: 'Turbocharged',    desc: 'Played a Turbo run' },
+  // 🐣 Easy
+  easy_hatchling:   { mode: 'easy', icon: '🐣', name: 'Hatchling',     desc: 'Played your first Easy game' },
+  easy_growing:     { mode: 'easy', icon: '🌱', name: 'Growing',       desc: '5 Easy games played (Daily or Turbo)' },
+  easy_brave_heart: { mode: 'easy', icon: '🎈', name: 'Brave Heart',   desc: 'Kept going to the very last try' },
+  easy_bright_idea: { mode: 'easy', icon: '💡', name: 'Bright Idea',   desc: 'Solved the word after the hint appeared' },
+  easy_slow_steady: { mode: 'easy', icon: '🐢', name: 'Slow & Steady', desc: 'Played Easy 3 days in a row' },
+  easy_little_star: { mode: 'easy', icon: '⭐', name: 'Little Star',   desc: '10 points in one Easy Turbo run' },
 };
+
+// Badges of the current mode (the 🏅 page shows only these).
+export const badgeIdsFor = (mode) => Object.keys(BADGES).filter((id) => (BADGES[id].mode ?? 'normal') === mode);

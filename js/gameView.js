@@ -2,6 +2,7 @@
 import {
   WORD_LENGTH, MAX_TRIES, BLANK, dailyWord, wpmForTry, evaluate, knownLetters,
   loadState, saveState, useTry, addGuess, elapsedMs, formatTime, pauseTimer, resumeTimer,
+  showsHint, HINT_AFTER,
 } from './game.js';
 import { MORSE, play, stop, tone } from './morse.js';
 import { playSfx } from './sfx.js';
@@ -66,8 +67,7 @@ function buildKeyboard() {
       } else {
         btn.dataset.key = k;
         // Morse drawn as shapes (round dot / pill dash) with a fixed gap, so dashes never merge
-        const morse = [...MORSE[k]].map((s) => `<i class="${s === '.' ? 'dit' : 'dah'}"></i>`).join('');
-        btn.innerHTML = `<span>${k}</span><small aria-hidden="true">${morse}</small>`;
+        btn.innerHTML = `<span>${k}</span><small aria-hidden="true">${morseShapes(k)}</small>`;
       }
       row.append(btn);
     }
@@ -135,6 +135,17 @@ function paintHistory() {
   }
 }
 
+// Morse as shapes: round dot for a dit, pill for a dah (same look as the keyboard).
+const morseShapes = (letter) => [...MORSE[letter]].map((s) => `<i class="${s === '.' ? 'dit' : 'dah'}"></i>`).join('');
+
+// 🐣 Easy hint: the word's Morse under the squares, letter by letter.
+function paintHint() {
+  const box = $('morse-hint');
+  box.hidden = !showsHint(state);
+  if (box.hidden) return;
+  box.innerHTML = [...dailyWord(state.day)].map((c) => `<span>${morseShapes(c)}</span>`).join('');
+}
+
 function paintKeyboard() {
   $('keyboard').classList.toggle('disabled', !canType());
   $('guess').disabled = !canType();
@@ -157,6 +168,7 @@ function paintAll() {
   paintPlayButton();
   paintHistory();
   paintKeyboard();
+  paintHint();
 }
 
 // ---------- Timer ----------
@@ -300,7 +312,8 @@ function submit() {
   paintSquares(true);
 
   const correct = result.filter(Boolean).length;
-  message(`${correct}/${WORD_LENGTH} correct. Play to listen, or edit and Guess (try ${state.tries + 1}).`);
+  if (showsHint(state) && state.tries === HINT_AFTER) message('🐣 Hint unlocked: the word in Morse is under the squares!');
+  else message(`${correct}/${WORD_LENGTH} correct. Play to listen, or edit and Guess (try ${state.tries + 1}).`);
 }
 
 // restored = true when reopening an already finished game (don't re-submit).

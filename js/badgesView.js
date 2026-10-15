@@ -1,6 +1,7 @@
 // Badges popup: every badge in a grid, unlocked ones with their date, locked ones grayed out.
 import { getBadges } from './api.js';
-import { BADGES } from './badges.js';
+import { BADGES, badgeIdsFor } from './badges.js';
+import { getMode, isEasy } from './mode.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -31,11 +32,12 @@ function square(id, earnedAt) {
 async function load(name) {
   const grid = $('badge-grid');
   grid.innerHTML = '';
+  $('badges-title').textContent = isEasy() ? '🐣 Easy badges' : 'Badges';
   $('badges-count').textContent = 'Loading…';
   $('badge-detail').textContent = 'Tap a badge to see how to earn it.';
   try {
     const earned = new Map((await getBadges(name)).map((b) => [b.badge_id, b.earned_at]));
-    const ids = Object.keys(BADGES);
+    const ids = badgeIdsFor(getMode());
     for (const id of ids) grid.append(square(id, earned.get(id)));
     const count = ids.filter((id) => earned.has(id)).length;
     $('badges-count').textContent = `${count} of ${ids.length} unlocked`;

@@ -7,7 +7,7 @@
   <meta name="description" content="A daily Morse code word game with a callsign leaderboard.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Fredoka:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <script async src="https://fkurz.net/ham/jscwlib/releases/jscwlib-0.3.0.js"></script>
   <script type="module" src="js/ui.js"></script>
@@ -43,6 +43,11 @@
       <span class="splash-word">PLAY</span>
     </button>
     <p class="splash-title">MORSE DAILY</p>
+    <!-- Difficulty for this session (remembered). Back here = refresh or ⟵ Exit. -->
+    <div class="splash-mode" role="radiogroup" aria-label="Difficulty">
+      <button type="button" role="radio" id="pick-easy" aria-checked="false">🐣 Easy</button>
+      <button type="button" role="radio" id="pick-normal" aria-checked="true">Normal</button>
+    </div>
   </section>
 
   <main>
@@ -89,11 +94,13 @@
 
     <!-- Shared header for Daily + Turbo -->
     <header id="app-bar" class="bar" hidden>
+      <button id="exit" type="button" class="icon-btn exit-btn" title="Back to the title screen (Easy / Normal)" aria-label="Exit to the title screen">⟵<span class="exit-label">Exit</span></button>
       <div class="mode-switch" role="tablist" aria-label="Game mode">
         <button type="button" role="tab" id="mode-daily" aria-selected="true">Daily</button>
         <button type="button" role="tab" id="mode-turbo" aria-selected="false">Turbo</button>
       </div>
       <div class="bar-actions">
+        <button id="cute-toggle" type="button" class="icon-btn cute-toggle" aria-pressed="false" title="Cute Morse sound" aria-label="Cute Morse sound">🎀</button>
         <button id="open-badges" type="button" class="icon-btn" aria-label="Badges" title="Badges">🏅</button>
         <button id="open-board" type="button" class="icon-btn" aria-label="Leaderboard" title="Leaderboard">🏆</button>
         <button id="sign-out" type="button" class="badge" title="Log out">
@@ -112,6 +119,7 @@
       <div id="meter" class="meter" aria-hidden="true"></div>
 
       <div id="word" class="word" aria-label="Your guess" aria-live="polite"></div>
+      <p id="morse-hint" class="morse-hint" aria-label="Hint: the word in Morse code" hidden></p>
       <p id="message" class="message" role="status"></p>
       <div class="actions">
         <button id="play" type="button" class="play"></button>
@@ -142,7 +150,7 @@
       <div id="turbo-options" class="turbo-options" hidden></div>
 
       <div id="turbo-intro" class="turbo-intro">
-        <p class="hint">One letter plays once. Pick it from three. Three lives, and it gets faster. 5 seconds per letter.<br>⚡ Answer within 2 s three times in a row: +½ ❤️ (up to 5).</p>
+        <p id="turbo-intro-text" class="hint"></p>
         <button id="turbo-start" type="button" class="play turbo-start">▶ Start</button>
       </div>
 

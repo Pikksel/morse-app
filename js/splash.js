@@ -3,6 +3,7 @@ import { MORSE, primeAudio } from './morse.js';
 import { playSfx, playPitched } from './sfx.js';
 import { loadPlayer } from './player.js';
 import { nextFact } from './facts.js';
+import { getMode, setGameMode } from './mode.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -270,6 +271,20 @@ const onPointerMove = (e) => setParallax(e.clientX / innerWidth * 2 - 1, e.clien
 // Android sends tilt freely; iPhone needs a permission prompt, so there it simply stays still.
 const onTilt = (e) => { if (e.gamma != null) setParallax(e.gamma / 30, (e.beta - 45) / 30); };
 
+// ---------- Easy | Normal ----------
+
+function paintModePick() {
+  $('pick-easy').setAttribute('aria-checked', getMode() === 'easy');
+  $('pick-normal').setAttribute('aria-checked', getMode() === 'normal');
+}
+
+function pickMode(mode) {
+  if (mode === getMode()) return;
+  setGameMode(mode); // also switches the cute Easy look on/off
+  paintModePick();
+  playPitched('tap');
+}
+
 // ---------- Start ----------
 
 // Shows the title screen; resolves once the player has tapped PLAY and the exit animation is done.
@@ -278,7 +293,7 @@ export function runSplash() {
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const onTap = (e) => {
-    if (e.target.closest('#splash-play')) return; // the PLAY ring itself starts the game
+    if (e.target.closest('#splash-play, .splash-mode')) return; // PLAY starts the game, the toggle picks Easy/Normal
     playPitched('tap'); // one sound per tap (not per ripple ring), random pitch each time
     if (!calm) countTap(); // easter egg
     countBurst();          // 5 taps + pause = a fun Morse fact
@@ -286,6 +301,12 @@ export function runSplash() {
     if (!calm) for (let i = 0; i < PER_TAP; i++) spawnParticle();
   };
   $('splash').addEventListener('pointerdown', onTap);
+
+  paintModePick();
+  const onPickEasy = () => pickMode('easy');
+  const onPickNormal = () => pickMode('normal');
+  $('pick-easy').addEventListener('click', onPickEasy);
+  $('pick-normal').addEventListener('click', onPickNormal);
 
   let ambientId = null;
   if (!calm) {
@@ -303,6 +324,8 @@ export function runSplash() {
       // Title screen is done: stop everything it runs in the background.
       clearInterval(ambientId);
       $('splash').removeEventListener('pointerdown', onTap);
+      $('pick-easy').removeEventListener('click', onPickEasy);   // mode is fixed for this session
+      $('pick-normal').removeEventListener('click', onPickNormal);
       removeEventListener('pointermove', onPointerMove);
       removeEventListener('deviceorientation', onTilt);
       setTimeout(resolve, 650); // matches the .leaving animations in style.css

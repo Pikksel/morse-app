@@ -1,4 +1,4 @@
-// Turbo mode: one letter plays once, pick it from three, three lives, faster and faster.
+// Turbo mode: one letter plays once, pick it from three (🐣 Easy: two), three lives, faster and faster.
 // The database picks the letters, checks the answers and keeps the score (see turbo_* in schema.sql);
 // this file only plays, shows and sends taps.
 import { turboStart, turboAnswer, getTurboBest, awardBadges } from './api.js';
@@ -8,10 +8,12 @@ import { play, stop } from './morse.js';
 import { playSfx, blip, prepareRandom, playRandom } from './sfx.js';
 import { confetti } from './confetti.js';
 import { loadPlayer } from './player.js';
+import { isEasy } from './mode.js';
 
 const $ = (id) => document.getElementById(id);
 
-const ANSWER_MS = 5000;   // time to answer, starting when the letter has finished playing
+// Time to answer, starting when the letter has finished playing. 🐣 Easy: 10 s (the server uses the same).
+const answerMs = () => (isEasy() ? 10000 : 5000);
 const RIGHT_MS = 650;     // pause after a correct answer before the next letter
 const WRONG_MS = 1200;    // a bit longer after a miss: time to see the right letter
 const START_HALVES = 6;   // lives in half-hearts: 6 = 3 hearts (the server keeps the real count)
@@ -120,11 +122,12 @@ function resetTimer() {
 
 function startTimer() {
   const bar = $('turbo-timer-bar');
+  const ms = answerMs();
   void bar.offsetWidth;
-  bar.style.transition = `width ${ANSWER_MS}ms linear`;
+  bar.style.transition = `width ${ms}ms linear`;
   bar.style.width = '0%';
-  lowId = setTimeout(() => bar.classList.add('low'), ANSWER_MS * 0.6);
-  countdownId = setTimeout(() => answer(null), ANSWER_MS);
+  lowId = setTimeout(() => bar.classList.add('low'), ms * 0.6);
+  countdownId = setTimeout(() => answer(null), ms);
 }
 
 function freezeTimer() {
@@ -289,9 +292,15 @@ async function showNewBadges() {
 const notifyState = () => document.dispatchEvent(new Event('morse:state'));
 export const isTurboRunning = () => !!run;
 
+const INTRO = {
+  normal: 'One letter plays once. Pick it from three. Three lives, and it gets faster. 5 seconds per letter.<br>⚡ Answer within 2 s three times in a row: +½ ❤️ (up to 5).',
+  easy: '🐣 One letter plays once. Pick it from two. Three lives, and it gets a little faster every 5 points. 10 seconds per letter.<br>⚡ Answer within 4 s three times in a row: +½ ❤️ (up to 5).',
+};
+
 // Turbo screen became visible: fresh look, ready to start.
 export function enterTurbo({ onOpenLeaderboard } = {}) {
   if (onOpenLeaderboard) onLeaderboard = onOpenLeaderboard;
+  $('turbo-intro-text').innerHTML = INTRO[isEasy() ? 'easy' : 'normal'];
   newSessionLook();
   paintStatus();
   showTimer(false);
@@ -323,7 +332,7 @@ $('turbo-options').addEventListener('click', (e) => {
   if (btn && !btn.disabled) answer(btn.dataset.letter);
 });
 
-// Keyboard: 1 / 2 / 3, or the letter itself.
+// Keyboard: 1 / 2 / 3 (Easy: 1 / 2), or the letter itself.
 document.addEventListener('keydown', (e) => {
   if ($('turbo').hidden || !run || answering || e.ctrlKey || e.metaKey || e.altKey) return;
   const buttons = [...$('turbo-options').children];

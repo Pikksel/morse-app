@@ -7,9 +7,10 @@
 > Claude keeps this file up to date and ticks `[x]` when a step is verified.
 > **New Claude chat?** Say: *"Read Morse-web/PLAN.md and continue."*
 
-## ▶ Where we left off (2026-10-14)
-Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–010 applied (Claude applies them via the Supabase connection).
-Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg), calm background when not playing, pause timer when page hidden.
+## ▶ Where we left off (2026-10-15)
+Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–013 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
+Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked, half-heart fast bonus), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg, fun facts), calm background when not playing, pause timer when page hidden.
+**New 2026-10-15: 🐣 Easy mode + 🎀 cute Morse sound (step 4.21)**, built and tested locally, not pushed yet. The user should test it on the phone (a real game in Easy Daily + Easy Turbo, 🎀 sound on/off).
 Open:
 - Decide: keep or remove Turtle for DAW1 / SHYT (earned under old 5-min rule)
 - 2026-10-15: badge backfill (players who qualified but hadn't finished a game since badges launched): 9 badges to ABC, ASDF, FIRS, SNOM, TAGG. 0 badges still owed
@@ -312,6 +313,67 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Server-checked: migration `012_turbo_fast_hearts.sql` (lives → `halves`, 6 = 3 hearts, max 10; `fast_streak`; +0.6 s network slack). Tested in PGlite (both paths) + rolled-back run on Supabase; applied
 - [x] UI: half hearts (left half red), extra heart slots above 3, ⚡ streak pips under the hearts, "⚡ Fast streak! +½ ❤️" + sparkle on the heart that grew; intro text explains it
 - Note: responses still include `lives` (= halves / 2) so an old open tab doesn't break
+
+### 4.21 🐣 Easy mode — BUILT 2026-10-15
+- [x] DB: migration 013 (mode column, mode-aware RPCs, Easy Turbo rules, 6 Easy badges). PGlite tests on both paths, applied, verified in a rolled-back run, advisors OK
+- [x] Title screen Easy | Normal toggle (`js/mode.js`, localStorage `morse-web:mode`, body class `easy`) + ⟵ Exit (reloads to the title screen, Daily clock paused)
+- [x] Easy Daily: own word (list offset by half), 20→5 WPM, Morse hint under the squares after 5 tries, own save key `…:easy`, own leaderboards
+- [x] Easy Turbo: 2 options, 6 WPM +1 per 5, 10 s timer, 4 s fast window, own leaderboards
+- [x] Easy badges on the 🏅 page (per mode)
+- [x] Cute look: pastel tokens + Fredoka (`--display` font variable), rounder squares/buttons, soft heart pop
+- [x] 🎀 Cute Morse (`js/cuteMorse.js`): header toggle in both modes, default off, Web Audio scheduling (timing checked: exact), each symbol cuts the previous one, silent-mode routing
+- [x] Easy sounds: `cute-win.mp3` replaces win (Daily solved + Turbo personal best), `enter-tap-cute.mp3` replaces the title-screen tap (swap lives in sfx.js `EASY_SOUNDS`)
+- [ ] User: test on phone (real Easy game, 🎀 on/off, Exit), then push
+
+Original proposal (kept for reference):
+**Choosing the mode**
+- Title screen: **Easy | Normal** toggle under PLAY (remembers the last choice). Locked for the session.
+- Back to the title screen: refresh, or **⟵ Exit** button top left (new). Header Daily/Turbo switch works inside the chosen mode.
+
+**Easy Daily**
+- Own daily word (same word list, different word each day) → Easy never spoils Normal; a player can play both each day.
+- Speeds 20 → 17 → 14 → 11 → 8 → 5 WPM (4 tries each, last 5). 25 tries like Normal.
+- Hint: after 5 failed tries the word's Morse pattern (• – • …) appears under the squares and stays.
+- Own leaderboard: 🐣 Easy Today / All-time.
+
+**Easy Turbo**
+- 2 answer buttons, always random letters (never similar-sounding).
+- Starts at 6 WPM, +1 WPM per 5 correct answers. 10 s per letter.
+- Hearts as Normal (3, half-heart bonus up to 5). Fast window 4 s (Normal: 2 s) — proposal.
+- Own leaderboard: 🐣 Easy Turbo Today / All-time.
+
+**🐣 Easy badges (6, encouraging)** — only Easy games count; Normal badges stay Normal-only
+| Badge | Earned by |
+|---|---|
+| 🐣 Hatchling | First Easy game |
+| 🌱 Growing | 5 Easy games played |
+| 🎈 Brave Heart | Finished an Easy Daily without solving it |
+| 💡 Bright Idea | Solved the Easy word after the Morse hint appeared (try 6+) |
+| 🐢 Slow & Steady | Played Easy 3 days in a row |
+| ⭐ Little Star | 10 points in one Easy Turbo run |
+- 🏅 page in an Easy session shows the Easy badges; in Normal the Normal ones (proposal).
+
+**🎀 Cute Morse sound (toggle, for fun/testing)**
+- Small 🎀 toggle in the header (Easy mode; proposal: also allowed in Normal? see questions). Remembered per device. Default off.
+- Dits play `sounds/cute-ding.mp3`, dahs `sounds/cute-dash.mp3` (user adds them).
+- Feasible at speed: both files are decoded once into the Web Audio API and every symbol is scheduled on the audio clock (millisecond-exact at any WPM, unlike `<audio>` which lags 20–50 ms on phones).
+- Each new symbol stops the previous one (cut). Morse timing stays correct; the square highlight still follows the letters.
+- Routed through the same hidden-`<audio>` trick as the normal Morse, so it also plays with the phone on silent.
+- Proposal: typed letters (keyboard) also use the cute sounds when the toggle is on.
+
+**🍬 Cute look (Easy only)**
+- Pastel palette (mint, pink, lavender), rounder bubbly font (e.g. "Baloo 2" / "Fredoka" from Google Fonts), soft bouncy animations, 🐣 in the header.
+- Pastel versions of the title screen ring and Turbo backgrounds; heart pop instead of shake.
+
+**Database (Claude)**
+- `mode` column ('normal' | 'easy') on `scores` (unique per player + day + mode) and `turbo_runs`.
+- Leaderboards / rank / best: mode parameter. Easy Turbo rules on the server (2 options, speed steps, 10 s, 4 s fast window).
+- 6 Easy badge rules; Normal badge rules limited to Normal games.
+- As always: migration file + schema.sql, PGlite tests (both paths), apply, verify with rolled-back runs, advisors.
+
+**Build order:** 1) DB → 2) title-screen toggle + Exit → 3) Easy Daily → 4) Easy Turbo → 5) Easy badges → 6) cute look → 7) 🎀 cute Morse sound.
+
+**Decided:** fast window 4 s; 🎀 in both modes, default off; badge names as above; 🏅 page per mode.
 
 ### 5. Polish
 - [ ] Share button (emoji grid)

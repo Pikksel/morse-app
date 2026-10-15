@@ -1,12 +1,19 @@
 // UI sound effects (files in /sounds). Preloaded so they start without delay.
+import { isEasy } from './mode.js';
+
 const sounds = {
   win: new Audio('sounds/win.mp3'),
+  cuteWin: new Audio('sounds/cute-win.mp3'), // 🐣 Easy: win (Daily solved, Turbo personal best)
   fail: new Audio('sounds/fail.mp3'),
   newBadge: new Audio('sounds/new-badge.mp3'), // each new badge (badge.mp3 retired: too big)
   firstContact: new Audio('sounds/first-time.mp3'), // First Contact badge
   enter: new Audio('sounds/enter.mp3'), // title screen PLAY
   shark: new Audio('sounds/shark.mp3'), // easter egg on the title screen (silent until the file exists)
 };
+// 🐣 Easy mode plays its own version of these sounds.
+const EASY_SOUNDS = { win: 'cuteWin', tap: 'tapCute' };
+const forMode = (name) => (isEasy() && EASY_SOUNDS[name]) || name;
+
 for (const audio of Object.values(sounds)) {
   audio.preload = 'auto';
   audio.volume = 0.7;
@@ -33,7 +40,7 @@ function audioFor(name, callsign) {
 
 // callsign (optional): the logged-in player, for VIP sounds.
 export function playSfx(name, callsign) {
-  const audio = audioFor(name, callsign);
+  const audio = audioFor(forMode(name), callsign);
   if (!audio) return;
   audio.currentTime = 0;
   audio.play().catch(() => {}); // blocked autoplay or missing file: stay silent
@@ -97,12 +104,14 @@ export function playRandom(name) {
 // range: max pitch change (0.12 = ±12%), minStep: always at least this far from the previous pitch.
 const PITCHED_SOUNDS = {
   tap: { file: 'sounds/enter-tap.mp3', range: 0.12, minStep: 0.05, volume: 0.5 },
+  tapCute: { file: 'sounds/enter-tap-cute.mp3', range: 0.12, minStep: 0.05, volume: 0.5 }, // 🐣 Easy title screen
   shimmer: { file: 'sounds/play-shimmer.mp3', range: 0.08, minStep: 0.03, volume: 0.35 }, // ring hit
 };
 const pitchedPool = {};   // a few players per sound, so quick taps can overlap
 const lastRate = {};
 
 export function playPitched(name) {
+  name = forMode(name);
   const cfg = PITCHED_SOUNDS[name];
   if (!cfg) return;
   pitchedPool[name] ??= { next: 0, players: Array.from({ length: 4 }, () => {

@@ -20,6 +20,7 @@
   --ring-shadow: #6b3a10;
   --radius: 10px;
   --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --display: 'Orbitron', var(--mono); /* big titles and numbers (🐣 Easy: Fredoka) */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -289,7 +290,7 @@ button.link {
 }
 
 .splash-word {
-  font-family: 'Orbitron', var(--mono);
+  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(2.6rem, 13vw, 3.6rem);
   letter-spacing: 0.14em;
@@ -301,7 +302,7 @@ button.link {
 
 .splash-title {
   margin: 0;
-  font-family: 'Orbitron', var(--mono);
+  font-family: var(--display);
   font-weight: 700;
   font-size: 0.8rem;
   letter-spacing: 0.45em;
@@ -430,7 +431,7 @@ button.link {
 }
 .fact p { margin: 4px 0 0; font-size: 0.9rem; line-height: 1.45; }
 .fact-label {
-  font-family: 'Orbitron', var(--mono);
+  font-family: var(--display);
   font-size: 0.6rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
@@ -470,7 +471,7 @@ button.link {
 .splash.leaving { animation: splash-out 0.35s ease-in 0.3s forwards; }
 .splash.leaving .splash-ring { animation: ring-out 0.65s ease-in forwards; }
 .splash.leaving .splash-word { animation: word-out 0.45s ease-in forwards; }
-.splash.leaving .splash-title { transition: opacity 0.3s; opacity: 0; }
+.splash.leaving .splash-title, .splash.leaving .splash-mode { transition: opacity 0.3s; opacity: 0; }
 
 @keyframes splash-drift { to { background-position: 0 0, 100% 100%; } }
 @keyframes ring-spin { to { transform: rotate(360deg); } }
@@ -552,7 +553,7 @@ button.link {
 .streak i { width: 14px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
 .streak i.lit { background: #ffd34d; box-shadow: 0 0 6px #ffd34d; }
 .turbo-score { display: grid; justify-items: center; line-height: 1; }
-.turbo-score b { font-family: 'Orbitron', var(--mono); font-size: 2.4rem; }
+.turbo-score b { font-family: var(--display); font-size: 2.4rem; }
 .turbo-score small { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }
 .turbo-wpm { justify-self: end; font-family: var(--mono); color: var(--muted); }
 
@@ -569,7 +570,7 @@ button.link {
   transition: border-color 0.15s, background 0.15s, transform 0.15s;
 }
 .turbo-orb span {
-  font-family: 'Orbitron', var(--mono);
+  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(1.6rem, 9vw, 2.4rem);
   letter-spacing: 0.08em;
@@ -592,12 +593,13 @@ button.link {
 
 .turbo-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-auto-flow: column;  /* 3 buttons (🐣 Easy: 2) share the row */
+  grid-auto-columns: 1fr;
   gap: 10px;
 }
 .turbo-option {
   height: 96px;
-  font-family: 'Orbitron', var(--mono);
+  font-family: var(--display);
   font-size: 2.6rem;
   font-weight: 900;
   color: var(--text);
@@ -619,7 +621,7 @@ button.link {
 .turbo-over .actions button { white-space: nowrap; padding-inline: 8px; }
 .turbo-over .badge-card { text-align: left; }
 .turbo-final { margin: 0; display: grid; line-height: 1; }
-.turbo-final b { font-family: 'Orbitron', var(--mono); font-size: 3.4rem; color: var(--accent); }
+.turbo-final b { font-family: var(--display); font-size: 3.4rem; color: var(--accent); }
 .turbo-final span { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }
 
 /* ---------- Turbo background: new hue + pattern every session ---------- */
@@ -1138,3 +1140,136 @@ button.badge {
 }
 
 [hidden] { display: none !important; }
+
+/* ---------- Easy | Normal (title screen) ---------- */
+
+.splash-mode {
+  position: relative;
+  z-index: 1; /* above the water layers */
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 3px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.splash-mode button {
+  padding: 5px 16px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border-radius: 999px;
+  transition: background 0.25s, color 0.25s;
+}
+.splash-mode button[aria-checked="true"] { color: var(--accent-text); background: var(--accent); }
+
+/* ---------- Header: ⟵ Exit and 🎀 ---------- */
+
+button.exit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 0;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+.exit-label { font-size: 0.8rem; font-weight: 600; }
+@media (max-width: 400px) { .exit-label { display: none; } } /* small phones: the arrow is enough */
+
+.cute-toggle[aria-pressed="false"] { filter: grayscale(1); opacity: 0.45; }
+.cute-toggle[aria-pressed="true"] { animation: cute-wiggle 0.5s ease; }
+@keyframes cute-wiggle { 30% { transform: rotate(-14deg) scale(1.2); } 65% { transform: rotate(10deg); } }
+
+@media (max-width: 400px) {
+  .bar-actions { gap: 2px; }
+  .mode-switch button { padding: 4px 10px; }
+}
+
+/* ---------- 🐣 Easy hint: the word in Morse, under the squares ---------- */
+
+.morse-hint {                 /* same grid as the squares: each letter's Morse under its square */
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  justify-items: center;
+  width: min(100%, 340px);
+  margin-inline: auto;
+  margin-bottom: 0;
+  color: var(--accent);
+  animation: hint-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.morse-hint[hidden] { display: none; }
+.morse-hint span { display: inline-flex; align-items: center; gap: 3px; }
+.morse-hint i { display: block; height: 7px; border-radius: 999px; background: currentColor; }
+.morse-hint .dit { width: 7px; }
+.morse-hint .dah { width: 15px; }
+@keyframes hint-in { from { opacity: 0; transform: translateY(-6px) scale(0.9); } }
+
+/* ---------- 🍬 Easy look: pastel, round and bouncy ---------- */
+
+body.easy {
+  --bg: #fdf6fb;
+  --surface: #ffffff;
+  --text: #4a3f57;
+  --muted: #8d819e;
+  --accent: #ee7fb1;
+  --accent-text: #ffffff;
+  --border: #f0dceb;
+  --correct: #6cc9a1;
+  --absent: #b9afcc;
+  --key: #a596c2;
+  --splash-a: #fff0f7;
+  --splash-b: #e6f6f0;
+  --splash-glow: rgb(238 127 177 / 0.3);
+  --ring-light: #ffffff;
+  --ring-shadow: #c45a8b;
+  --fact-bg: rgb(120 70 110 / 0.12);
+  --fact-text: #7a6a86;
+  --radius: 16px;
+  --display: 'Fredoka', system-ui, sans-serif;
+  --t-l1: 95%;
+  --t-l2: 89%;
+  --t-a: 0.1;
+  font-family: 'Fredoka', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  body.easy {
+    --bg: #221c2a;
+    --surface: #2d2537;
+    --text: #f4eaf6;
+    --muted: #b3a5c2;
+    --accent: #ff9cc8;
+    --accent-text: #2a1e2f;
+    --border: #463a54;
+    --correct: #4fae8a;
+    --absent: #4a4059;
+    --key: #5e4f72;
+    --splash-a: #2d2142;
+    --splash-b: #172925;
+    --splash-glow: rgb(255 156 200 / 0.22);
+    --ring-shadow: #8a3d63;
+    --fact-bg: rgb(0 0 0 / 0.35);
+    --fact-text: #c7b9d4;
+    --t-l1: 20%;
+    --t-l2: 12%;
+  }
+}
+
+body.easy .square { border-radius: 16px; }
+body.easy .square.correct { animation: easy-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+body.easy .key { border-radius: 12px; }
+body.easy .mini { border-radius: 6px; }
+body.easy .splash-word { letter-spacing: 0.08em; padding-left: 0.08em; font-weight: 700; }
+body.easy .splash-title { letter-spacing: 0.3em; padding-left: 0.3em; font-size: 0.95rem; }
+body.easy .lives.hit { animation: easy-heart 0.45s ease; } /* a soft pop instead of the shake */
+body.easy .turbo-option { border-radius: 20px; }
+body.easy .dialog { border-radius: 22px; }
+body.easy button:not(:disabled):active { transform: scale(0.95); }
+
+@keyframes easy-pop { 40% { transform: scale(1.12); } }
+@keyframes easy-heart { 50% { transform: scale(0.85); } }
+
+@media (prefers-reduced-motion: reduce) {
+  body.easy .square.correct, body.easy .lives.hit, .morse-hint, .cute-toggle[aria-pressed="true"] { animation: none; }
+}

@@ -1,0 +1,352 @@
+-- 2026-10-15: 🐣 Easy mode. Applied by Claude via the Supabase connection, after 012.
+-- - `mode` ('normal' | 'easy') on scores and turbo_runs. One Daily score per player, day AND mode.
+-- - Leaderboards / rank / best take p_mode (default 'normal', so old calls keep working).
+-- - Easy Turbo: 2 answer options (always random), 6 WPM +1 per 5 correct, 10 s per letter, fast = 4 s.
+-- - 6 Easy badges; Normal badge rules now only count Normal games.
+
+-- ---------- Tables ----------
+alter table public.scores add column if not exists mode text not null default 'normal';
+alter table public.scores drop constraint if exists scores_mode_check;
+alter table public.scores add constraint scores_mode_check check (mode in ('normal', 'easy'));
+alter table public.scores drop constraint if exists scores_player_id_day_key;
+alter table public.scores drop constraint if exists scores_player_day_mode_key;
+alter table public.scores add constraint scores_player_day_mode_key unique (player_id, day, mode);
+
+alter table public.turbo_runs add column if not exists mode text not null default 'normal';
+alter table public.turbo_runs drop constraint if exists turbo_runs_mode_check;
+alter table public.turbo_runs add constraint turbo_runs_mode_check check (mode in ('normal', 'easy'));
+
+-- Old signatures are replaced by versions with a p_mode parameter.
+drop function if exists public.submit_score(text, text, date, int, int);
+drop function if exists public.get_daily_leaderboard(date, int);
+drop function if exists public.get_alltime_leaderboard(int);
+drop function if exists public.get_rank(text, date);
+drop function if exists public.turbo_start(text, text);
+drop function if exists public.get_turbo_leaderboard(text, int);
+drop function if exists public.get_turbo_best(text);
+drop function if exists public._turbo_wpm(int);
+drop function if exists public._turbo_options(text, int);
+
+-- ---------- Daily ----------
+
+-- Submit today's result for a mode. Returns the player's rank for the day in that mode.
+create or replace function public.submit_score(
+  p_name text, p_token text, p_day date, p_guesses int, p_time_ms int, p_mode text default 'normal'
+)
+returns int
+language plpgsql security definer
+set search_path = public, extensions
+as $$
+declare
+  v_player uuid := public._player_id(p_name, p_token);
+  v_rank   int;
+begin
+  if v_player is null then raise exception 'BAD_TOKEN'; end if;
+  if p_day <> (now() at time zone 'utc')::date then raise exception 'WRONG_DAY'; end if;
+
+  begin
+    insert into public.scores (player_id, day, guesses, time_ms, mode)
+    values (v_player, p_day, p_guesses, p_time_ms, p_mode);
+  exception when unique_violation then
+    raise exception 'ALREADY_SUBMITTED';
+  end;
+
+  select r into v_rank from (
+    select player_id, rank() over (order by guesses, time_ms) as r
+    from public.scores where day = p_day and mode = p_mode
+  ) t where player_id = v_player;
+  return v_rank;
+end;
+$$;
+
+-- One day's leaderboard for a mode: fewest tries, then fastest. Everyone by default.
+create or replace function public.get_daily_leaderboard(p_day date, p_limit int default null, p_mode text default 'normal')
+returns table (rank bigint, name text, guesses int, time_ms int)
+language sql stable security definer
+set search_path = public
+as $$
+  select rank() over (order by s.guesses, s.time_ms), p.name, s.guesses, s.time_ms
+  from public.scores s join public.players p on p.id = s.player_id
+  where s.day = p_day and s.mode = p_mode
+  order by s.guesses, s.time_ms
+  limit p_limit
+$$;
+
+-- A player's current rank for a day and mode (null if no score).
+create or replace function public.get_rank(p_name text, p_day date, p_mode text default 'normal')
+returns int
+language sql stable security definer
+set search_path = public
+as $$
+  select r::int from (
+    select p.name, rank() over (order by s.guesses, s.time_ms) as r
+    from public.scores s join public.players p on p.id = s.player_id
+    where s.day = p_day and s.mode = p_mode
+  ) t
+  where name = upper(p_name)
+$$;
+
+-- All-time for a mode: average tries, at least 3 games played.
+create or replace function public.get_alltime_leaderboard(p_limit int default 10, p_mode text default 'normal')
+returns table (rank bigint, name text, games bigint, avg_guesses numeric)
+language sql stable security definer
+set search_path = public
+as $$
+  select rank() over (order by avg(s.guesses)), p.name, count(*), round(avg(s.guesses), 2)
+  from public.scores s join public.players p on p.id = s.player_id
+  where s.mode = p_mode
+  group by p.name
+  having count(*) >= 3
+  order by avg(s.guesses), count(*) desc
+  limit least(p_limit, 100)
+$$;
+
+-- ---------- Turbo ----------
+
+-- Speed. Normal: letters 1–3 at 10 WPM, then +1 per correct (max 40). Easy: 6 WPM, +1 per 5 correct (max 30).
+create or replace function public._turbo_wpm(p_score int, p_mode text default 'normal')
+returns int
+language sql immutable
+set search_path = ''
+as $$
+  select case when p_mode = 'easy' then least(30, 6 + p_score / 5)
+              else least(40, 10 + greatest(0, p_score - 2)) end
+$$;
+
+-- Answer buttons (shuffled). Normal: 3 (similar-sounding from score 10). Easy: 2, always random.
+create or replace function public._turbo_options(p_letter text, p_score int, p_mode text default 'normal')
+returns text[]
+language plpgsql volatile
+set search_path = public
+as $$
+declare
+  picks text[] := '{}';
+  wrong int := case when p_mode = 'easy' then 1 else 2 end;
+  c text;
+begin
+  if p_mode <> 'easy' and p_score >= 10 then
+    select coalesce((array_agg(l order by random()))[1:2], '{}') into picks
+    from (select chr(64 + g) as l from generate_series(1, 26) g) t
+    where l <> p_letter and public._one_edit(public._morse(l), public._morse(p_letter));
+  end if;
+  while coalesce(array_length(picks, 1), 0) < wrong loop
+    c := chr(65 + floor(random() * 26)::int);
+    if c <> p_letter and not (c = any(picks)) then picks := picks || c; end if;
+  end loop;
+  return (select array_agg(x order by random()) from unnest(picks || p_letter) as x);
+end;
+$$;
+
+revoke execute on function public._turbo_wpm(int, text), public._turbo_options(text, int, text)
+from public, anon, authenticated;
+
+create or replace function public.turbo_start(p_name text, p_token text, p_mode text default 'normal')
+returns json
+language plpgsql security definer
+set search_path = public, extensions
+as $$
+declare
+  v_player uuid := public._player_id(p_name, p_token);
+  v_letter text := public._turbo_letter(null);
+  v_wpm    int  := public._turbo_wpm(0, p_mode);
+  v_id     uuid;
+begin
+  if v_player is null then raise exception 'BAD_TOKEN'; end if;
+  if p_mode not in ('normal', 'easy') then raise exception 'BAD_MODE'; end if;
+  update public.turbo_runs set ended_at = now() where player_id = v_player and ended_at is null;
+  insert into public.turbo_runs (player_id, letters, current_letter, current_wpm, sent_at, mode)
+  values (v_player, 1, v_letter, v_wpm, now(), p_mode)
+  returning id into v_id;
+  return json_build_object(
+    'run_id', v_id, 'score', 0, 'halves', 6, 'lives', 3, 'streak', 0, 'mode', p_mode,
+    'next', json_build_object('letter', v_letter, 'wpm', v_wpm, 'options', public._turbo_options(v_letter, 0, p_mode)));
+end;
+$$;
+
+-- Answers the current letter (p_choice null = timer ran out). The run's mode sets the rules:
+-- answer time 5 s (Easy 10 s), fast window 2 s (Easy 4 s), plus network slack.
+create or replace function public.turbo_answer(p_name text, p_token text, p_run uuid, p_choice text)
+returns json
+language plpgsql security definer
+set search_path = public, extensions
+as $$
+declare
+  v_player  uuid := public._player_id(p_name, p_token);
+  r         public.turbo_runs;
+  v_secs    numeric;
+  v_elapsed numeric;
+  v_window  numeric;
+  v_fastwin numeric;
+  v_late    boolean;
+  v_correct boolean;
+  v_fast    boolean := false;
+  v_bonus   boolean := false;
+  v_capped  boolean := false;
+  v_answer  text;
+  v_letter  text;
+  v_wpm     int;
+begin
+  if v_player is null then raise exception 'BAD_TOKEN'; end if;
+  select * into r from public.turbo_runs
+  where id = p_run and player_id = v_player and ended_at is null
+  for update;
+  if not found then raise exception 'NO_RUN'; end if;
+
+  v_window  := case when r.mode = 'easy' then 10 else 5 end;
+  v_fastwin := case when r.mode = 'easy' then 4 else 2 end;
+  v_answer  := r.current_letter;
+  v_secs    := public._letter_seconds(r.current_letter, r.current_wpm) + 0.4;
+  v_elapsed := extract(epoch from now() - r.sent_at);
+  v_late    := v_elapsed > v_secs + v_window + 2.5;
+  v_correct := p_choice is not null and upper(p_choice) = r.current_letter and not v_late;
+
+  if v_correct then
+    r.score := r.score + 1;
+    v_fast := v_elapsed <= v_secs + v_fastwin + 0.6;
+    r.fast_streak := case when v_fast then r.fast_streak + 1 else 0 end;
+    if r.fast_streak >= 3 then
+      r.fast_streak := 0;
+      v_bonus := true;
+      v_capped := r.halves >= 10;
+      r.halves := least(10, r.halves + 1);
+    end if;
+  else
+    r.halves := r.halves - 2;
+    r.fast_streak := 0;
+  end if;
+
+  if r.halves <= 0 then
+    update public.turbo_runs
+    set score = r.score, halves = 0, fast_streak = 0, ended_at = now(), current_letter = null, sent_at = null
+    where id = r.id;
+    return json_build_object('correct', v_correct, 'fast', v_fast, 'bonus', false, 'capped', false,
+                             'answer', v_answer, 'late', v_late, 'score', r.score,
+                             'halves', 0, 'lives', 0, 'streak', 0, 'over', true);
+  end if;
+
+  v_letter := public._turbo_letter(v_answer);
+  v_wpm    := public._turbo_wpm(r.score, r.mode);
+  update public.turbo_runs
+  set score = r.score, halves = r.halves, fast_streak = r.fast_streak, letters = r.letters + 1,
+      current_letter = v_letter, current_wpm = v_wpm, sent_at = now()
+  where id = r.id;
+  return json_build_object(
+    'correct', v_correct, 'fast', v_fast, 'bonus', v_bonus, 'capped', v_capped,
+    'answer', v_answer, 'late', v_late, 'score', r.score,
+    'halves', r.halves, 'lives', r.halves / 2.0, 'streak', r.fast_streak, 'over', false,
+    'next', json_build_object('letter', v_letter, 'wpm', v_wpm, 'options', public._turbo_options(v_letter, r.score, r.mode)));
+end;
+$$;
+
+-- Best Turbo score per player for a mode. p_scope 'today' (UTC) or 'alltime'. Ties: who got there first.
+create or replace function public.get_turbo_leaderboard(p_scope text default 'today', p_limit int default null, p_mode text default 'normal')
+returns table (rank bigint, name text, score int)
+language sql stable security definer
+set search_path = public
+as $$
+  with best as (
+    select distinct on (t.player_id) t.player_id, t.score, coalesce(t.ended_at, t.started_at) as reached
+    from public.turbo_runs t
+    where t.mode = p_mode
+      and (p_scope = 'alltime' or (t.started_at at time zone 'utc')::date = (now() at time zone 'utc')::date)
+    order by t.player_id, t.score desc, coalesce(t.ended_at, t.started_at)
+  )
+  select rank() over (order by b.score desc), p.name, b.score
+  from best b join public.players p on p.id = b.player_id
+  order by b.score desc, b.reached
+  limit p_limit
+$$;
+
+create or replace function public.get_turbo_best(p_name text, p_mode text default 'normal')
+returns json
+language sql stable security definer
+set search_path = public
+as $$
+  select json_build_object(
+    'today',        (select score from public.get_turbo_leaderboard('today', null, p_mode)   where name = upper(p_name)),
+    'today_rank',   (select rank  from public.get_turbo_leaderboard('today', null, p_mode)   where name = upper(p_name)),
+    'alltime',      (select score from public.get_turbo_leaderboard('alltime', null, p_mode) where name = upper(p_name)),
+    'alltime_rank', (select rank  from public.get_turbo_leaderboard('alltime', null, p_mode) where name = upper(p_name))
+  )
+$$;
+
+-- ---------- Badges ----------
+-- Normal badges count Normal games only. Easy badges (easy_*) count Easy games only.
+create or replace function public._badges_earned(p_player uuid)
+returns setof text
+language sql stable security definer
+set search_path = public
+as $$
+  with mine as (
+    select day, guesses, time_ms from public.scores where player_id = p_player and mode = 'normal'
+  ),
+  play_runs as (
+    select count(*) as len
+    from (select day - (row_number() over (order by day))::int as grp from mine) t
+    group by grp
+  ),
+  daily_rank as (
+    select player_id, day, rank() over (partition by day order by guesses, time_ms) as r
+    from public.scores
+    where mode = 'normal' and day < (now() at time zone 'utc')::date      -- finished days only
+  ),
+  tops as (
+    select day from daily_rank where player_id = p_player and r = 1
+  ),
+  top_runs as (
+    select count(*) as len
+    from (select day - (row_number() over (order by day))::int as grp from tops) t
+    group by grp
+  ),
+  miss_runs as (
+    select count(*) as len
+    from (select day - (row_number() over (order by day))::int as grp from mine where guesses = 26) t
+    group by grp
+  ),
+  easy_daily as (
+    select day, guesses from public.scores where player_id = p_player and mode = 'easy'
+  ),
+  easy_turbo as (
+    select score, (started_at at time zone 'utc')::date as day from public.turbo_runs where player_id = p_player and mode = 'easy'
+  ),
+  easy_days as (
+    select distinct day from (select day from easy_daily union all select day from easy_turbo) d
+  ),
+  easy_runs as (
+    select count(*) as len
+    from (select day - (row_number() over (order by day))::int as grp from easy_days) t
+    group by grp
+  )
+  select 'first_contact'  where (select count(*) from mine) >= 1
+  union all select 'regular'       where (select count(*) from mine) >= 5
+  union all select 'veteran'       where (select count(*) from mine) >= 14
+  union all select 'old_timer'     where (select count(*) from mine) >= 30
+  union all select 'speed_demon'   where exists (select 1 from mine where guesses <= 4)
+  union all select 'qrq'           where exists (select 1 from mine where guesses = 1)
+  union all select 'never_give_up' where exists (select 1 from mine where guesses between 23 and 25)
+  union all select 'turtle'        where exists (select 1 from mine where guesses <= 25 and time_ms > 480000)
+  union all select 'streak_5'      where exists (select 1 from play_runs where len >= 5)
+  union all select 'streak_30'     where exists (select 1 from play_runs where len >= 30)
+  union all select 'top_band'      where exists (select 1 from tops)
+  union all select 'week_champion' where exists (select 1 from top_runs where len >= 5)
+  union all select 'time_to_go_home' where exists (select 1 from miss_runs where len >= 2)
+  union all select 'turbocharged'  where exists (select 1 from public.turbo_runs where player_id = p_player and mode = 'normal')
+  -- 🐣 Easy badges
+  union all select 'easy_hatchling'   where exists (select 1 from easy_daily) or exists (select 1 from easy_turbo)
+  union all select 'easy_growing'     where (select count(*) from easy_daily) + (select count(*) from easy_turbo) >= 5
+  union all select 'easy_brave_heart' where exists (select 1 from easy_daily where guesses = 26)
+  union all select 'easy_bright_idea' where exists (select 1 from easy_daily where guesses between 6 and 25)
+  union all select 'easy_slow_steady' where exists (select 1 from easy_runs where len >= 3)
+  union all select 'easy_little_star' where exists (select 1 from easy_turbo where score >= 10)
+$$;
+revoke execute on function public._badges_earned(uuid) from public, anon, authenticated;
+
+grant execute on function
+  public.submit_score(text, text, date, int, int, text),
+  public.get_daily_leaderboard(date, int, text),
+  public.get_rank(text, date, text),
+  public.get_alltime_leaderboard(int, text),
+  public.turbo_start(text, text, text),
+  public.get_turbo_leaderboard(text, int, text),
+  public.get_turbo_best(text, text)
+to anon, authenticated;

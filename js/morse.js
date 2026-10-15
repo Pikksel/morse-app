@@ -1,4 +1,6 @@
 // Wrapper around jscwlib (global `jscw`, loaded in index.html).
+// With 🎀 Cute Morse on, the same calls play the cute MP3 dits/dahs instead (cuteMorse.js).
+import { primeCute, playCute, stopCute } from './cuteMorse.js';
 
 export const MORSE = {
   A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..',
@@ -58,14 +60,37 @@ function getPlayer(wpm) {
   return player;
 }
 
+// ---------- 🎀 Cute Morse toggle (remembered per device, off by default) ----------
+
+const CUTE_KEY = 'morse-web:cute';
+let cute = false;
+try { cute = localStorage.getItem(CUTE_KEY) === 'on'; } catch {}
+
+export const isCute = () => cute;
+
+// Call from a tap (the toggle), so the cute sounds are allowed to play.
+export function setCute(on) {
+  stop();
+  cute = on;
+  try { localStorage.setItem(CUTE_KEY, on ? 'on' : 'off'); } catch {}
+  if (on) primeCute();
+}
+
+const codesFor = (text) => [...text.toUpperCase()].map((c) => MORSE[c] ?? null);
+
 // Call from a tap (e.g. the title screen): sets up the Morse audio while the browser allows it.
 export function primeAudio() {
   if (typeof jscw !== 'undefined') getPlayer(20);
+  if (cute) primeCute();
 }
 
 // Plays text at the given speed. onLetter(index) fires as each letter starts;
 // onDone runs when playback finishes.
 export function play(text, wpm, onDone, onLetter = () => {}) {
+  if (cute) {
+    stop();
+    return playCute(codesFor(text), wpm, LEAD_IN_S, onDone, onLetter);
+  }
   getPlayer(wpm).startDelay = LEAD_IN_S;
   const id = ++playId;
   player.setWpm(wpm);
@@ -76,6 +101,10 @@ export function play(text, wpm, onDone, onLetter = () => {}) {
 
 // Short feedback sound, e.g. one letter. No lead-in, so it feels instant.
 export function tone(text, wpm = 20) {
+  if (cute) {
+    stop();
+    return playCute(codesFor(text), wpm, 0);
+  }
   getPlayer(wpm);
   if (player.init_done) player.stop(); // fast taps: cut the previous one (stop() fails before the first play)
   player.startDelay = 0;
@@ -90,6 +119,7 @@ export function tone(text, wpm = 20) {
 export const beep = (symbol) => tone(symbol === '.' ? 'E' : 'T');
 
 export function stop() {
+  stopCute();
   playId++;
   if (player?.init_done) player.stop();
 }

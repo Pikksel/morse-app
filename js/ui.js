@@ -1,10 +1,11 @@
 import { register, login, logout, verifyPlayer, submitScore, awardBadges } from './api.js';
 import { loadPlayer, savePlayer, clearPlayer, NAME_PATTERN, PASSWORD_PATTERN } from './player.js';
 import { initGame, currentState, isDailyInProgress } from './gameView.js';
-import { saveState, score, elapsedMs } from './game.js';
+import { saveState, score, elapsedMs, pauseTimer } from './game.js';
 import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
 import { openBadges } from './badgesView.js';
-import { beep, stop } from './morse.js';
+import { beep, stop, tone, isCute, setCute } from './morse.js';
+import { getMode } from './mode.js';
 import { enterTurbo, leaveTurbo, isTurboRunning } from './turbo.js';
 import { setAmbient } from './ambient.js';
 import { runSplash } from './splash.js';
@@ -226,7 +227,7 @@ async function onFinish(state, restored) {
   // Let the last flip (and the confetti on a win) play before the popup covers it.
   // Reopened finished game: wait for the screen's entrance animation first,
   // and only once per session (not every time you switch back from Turbo).
-  const key = `${player.name}:${state.day}`;
+  const key = `${player.name}:${state.day}:${getMode()}`;
   if (!restored || resultsShownFor !== key) {
     resultsShownFor = key;
     const delay = restored ? 900 : state.status === 'won' ? 2200 : 1400;
@@ -262,6 +263,27 @@ $('open-board').addEventListener('click', () => {
   else openResults(currentState(), name);
 });
 $('open-badges').addEventListener('click', () => openBadges(loadPlayer()?.name ?? ''));
+
+// ⟵ Exit: back to the title screen to pick Easy / Normal. A Daily word in progress is saved
+// (its clock pauses while away); a Turbo run ends with its score so far.
+$('exit').addEventListener('click', () => {
+  stop();
+  if (currentState()) pauseTimer(currentState()); // the title screen time doesn't count
+  history.replaceState(null, '', location.pathname + location.search); // start on Daily next time
+  location.reload();
+});
+
+// 🎀 Cute Morse sound (remembered per device). Turning it on plays a little sample.
+function paintCute() {
+  $('cute-toggle').setAttribute('aria-pressed', isCute());
+  $('cute-toggle').title = isCute() ? 'Cute Morse sound: on' : 'Cute Morse sound: off';
+}
+$('cute-toggle').addEventListener('click', () => {
+  setCute(!isCute());
+  paintCute();
+  if (isCute()) tone('E', 15);
+});
+paintCute();
 
 $('sign-out').addEventListener('click', () => {
   if (!confirm('Log out? Log back in with your callsign and Morse password.')) return;

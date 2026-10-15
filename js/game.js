@@ -4,7 +4,9 @@
 // - 25 tries. Each Play costs one try and grants one guess (a blind Guess costs a try too).
 // - Speed starts at 35 WPM and drops 5 WPM every 4 tries, down to 10 (35 ×4, 30 ×4 ... 15 ×4, 10 ×5).
 // - Blanks are allowed. Correct letters turn green; no other hints.
+// 🐣 Easy: its own daily word, slower speeds (20 → 5 WPM) and the word's Morse as a hint after 5 tries.
 import { ANSWERS } from './words.js';
+import { getMode } from './mode.js';
 
 export const WORD_LENGTH = 5;
 export const MAX_TRIES = 25;
@@ -18,19 +20,31 @@ export function todayKey(now = new Date()) {
   return now.toISOString().slice(0, 10);
 }
 
-export function dailyWord(dayKey = todayKey()) {
-  const dayNumber = Math.floor((Date.parse(dayKey) - EPOCH) / DAY_MS);
+// Easy uses the same list, half a list further on: a different word than Normal every day.
+export function dailyWord(dayKey = todayKey(), mode = getMode()) {
+  const dayNumber = Math.floor((Date.parse(dayKey) - EPOCH) / DAY_MS)
+    + (mode === 'easy' ? Math.floor(ANSWERS.length / 2) : 0);
   const i = ((dayNumber % ANSWERS.length) + ANSWERS.length) % ANSWERS.length;
   return ANSWERS[i];
 }
 
-export const START_WPM = 35;
-export const MIN_WPM = 10;
 export const TRIES_PER_SPEED = 4;
+const SPEEDS = {
+  normal: { start: 35, step: 5, min: 10 }, // 35, 30, 25, 20, 15, 10
+  easy:   { start: 20, step: 3, min: 5 },  // 20, 17, 14, 11, 8, 5
+};
 
-// Try 1–4 → 35 WPM, 5–8 → 30, 9–12 → 25, 13–16 → 20, 17–20 → 15, 21–25 → 10.
+// Try 1–4 → first speed, 5–8 → next … the last speed covers tries 21–25.
 export function wpmForTry(tryNumber) {
-  return Math.max(MIN_WPM, START_WPM - 5 * Math.floor((tryNumber - 1) / TRIES_PER_SPEED));
+  const { start, step, min } = SPEEDS[getMode()];
+  return Math.max(min, start - step * Math.floor((tryNumber - 1) / TRIES_PER_SPEED));
+}
+
+// 🐣 Easy: the word's Morse appears once 5 tries are used up.
+export const HINT_AFTER = 5;
+export function showsHint(state) {
+  return getMode() === 'easy' && state.status === 'playing'
+    && (state.tries > HINT_AFTER || (state.tries === HINT_AFTER && !state.canGuess));
 }
 
 // true per position where the letter is right.
@@ -47,13 +61,14 @@ export function knownLetters(state) {
 
 // ---------- Saved state (one game per day, per callsign) ----------
 
-// Each callsign has its own game, so several players can share a device.
-const keyFor = (owner) => `morse-web:game:${owner}`;
+// Each callsign has its own game, so several players can share a device. Easy is saved separately.
+const keyFor = (owner) => `morse-web:game:${owner}${getMode() === 'easy' ? ':easy' : ''}`;
 
 function newState(day, owner) {
   return {
     day,
     owner,             // callsign this game belongs to
+    mode: getMode(),   // 'normal' | 'easy'
     tries: 0,          // plays used
     canGuess: false,   // one guess per play
     guesses: [],       // { word, tryNumber }; word uses BLANK for empty squares

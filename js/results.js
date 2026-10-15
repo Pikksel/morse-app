@@ -4,6 +4,7 @@ import { MAX_TRIES, dailyWord, elapsedMs, formatTime, todayKey } from './game.js
 import { MORSE } from './morse.js';
 import { BADGES } from './badges.js';
 import { revealSequence } from './badgeReveal.js';
+import { isEasy } from './mode.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -87,7 +88,8 @@ async function loadBoard() {
   const turbo = tab === 'turbo';
   $('board-tabs').hidden = turbo;
   $('turbo-scope').hidden = !turbo;
-  $('board-title').textContent = turbo ? '🏁 Turbo leaderboard' : 'Leaderboard';
+  const easy = isEasy() ? '🐣 Easy ' : ''; // Easy has its own leaderboards
+  $('board-title').textContent = turbo ? `🏁 ${easy}Turbo leaderboard` : `${easy}Leaderboard`;
   $('countdown-line').hidden = turbo; // "Next word" is about the daily word
   $('turbo-scope-today').setAttribute('aria-selected', turboScope === 'today');
   $('turbo-scope-alltime').setAttribute('aria-selected', turboScope === 'alltime');
