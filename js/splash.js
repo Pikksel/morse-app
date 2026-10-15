@@ -2,6 +2,7 @@
 import { MORSE, primeAudio } from './morse.js';
 import { playSfx, playPitched } from './sfx.js';
 import { loadPlayer } from './player.js';
+import { nextFact } from './facts.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -186,6 +187,54 @@ function shark() {
   }, 120);
 }
 
+// ---------- Fun Morse fact: tap exactly 5 times, then pause ----------
+
+const FACT_TAPS = 5;
+const FACT_PAUSE_MS = 1500;   // quiet time after the 5th tap (more taps = no fact, maybe a shark)
+const FACT_SHOW_MS = 10000;
+const POOF_MS = 1400;         // the "cloud" at the end
+let burst = 0;
+let burstTimer = null;
+let factShowing = false;
+
+function countBurst() {
+  burst++;
+  clearTimeout(burstTimer);
+  burstTimer = setTimeout(() => {
+    if (burst === FACT_TAPS && !factShowing && !$('splash').classList.contains('leaving')) showFact();
+    burst = 0;
+    tapTimes = []; // a pause also resets the shark: it needs one continuous tapping frenzy
+  }, FACT_PAUSE_MS);
+}
+
+function showFact() {
+  factShowing = true;
+  const card = document.createElement('div');
+  card.className = 'fact';
+  card.setAttribute('role', 'status');
+  card.innerHTML = '<span class="fact-label">Fun Morse fact</span><p></p>';
+  card.querySelector('p').textContent = nextFact();
+  $('splash').append(card);
+
+  setTimeout(() => poof(card), FACT_SHOW_MS);
+}
+
+// The card blurs, swells and fades while soft puffs of smoke drift out of it.
+function poof(card) {
+  card.classList.add('poof');
+  for (let i = 0; i < 14; i++) {
+    const puff = document.createElement('span');
+    puff.className = 'puff';
+    puff.style.left = `${10 + Math.random() * 80}%`;
+    puff.style.top = `${20 + Math.random() * 60}%`;
+    puff.style.setProperty('--dx', `${(Math.random() - 0.5) * 120}px`);
+    puff.style.setProperty('--dy', `${-20 - Math.random() * 60}px`);
+    puff.style.animationDelay = `${Math.random() * 250}ms`;
+    card.append(puff);
+  }
+  setTimeout(() => { card.remove(); factShowing = false; }, POOF_MS);
+}
+
 // ---------- Floating dits and dahs ----------
 
 const AMBIENT = 8;          // always drifting
@@ -232,6 +281,7 @@ export function runSplash() {
     if (e.target.closest('#splash-play')) return; // the PLAY ring itself starts the game
     playPitched('tap'); // one sound per tap (not per ripple ring), random pitch each time
     if (!calm) countTap(); // easter egg
+    countBurst();          // 5 taps + pause = a fun Morse fact
     ripple(e.clientX, e.clientY);
     if (!calm) for (let i = 0; i < PER_TAP; i++) spawnParticle();
   };

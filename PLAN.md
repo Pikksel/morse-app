@@ -12,7 +12,12 @@ Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app
 Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg), calm background when not playing, pause timer when page hidden.
 Open:
 - Decide: keep or remove Turtle for DAW1 / SHYT (earned under old 5-min rule)
-- Add `sounds/shark.mp3`; unused files to delete before commit: `sounds/badge.mp3`, `sounds/enter_old.mp3` (`sounds/sonar.mp3` kept for later)
+- 2026-10-15: badge backfill (players who qualified but hadn't finished a game since badges launched): 9 badges to ABC, ASDF, FIRS, SNOM, TAGG. 0 badges still owed
+- ⏰ Debug rule (migration 011, pg_cron): on **2026-10-16 05:01 UTC** ABC and ASDF are deleted if they haven't played (Daily or Turbo) since 2026-10-15 05:00 UTC; the job then removes itself. Tested in rolled-back transactions (delete path + keep-if-played path). Check the result: `select * from cron.job_run_details order by start_time desc limit 5;` and whether ABC/ASDF still exist. Cancel before then: `select cron.unschedule('delete-test-accounts-abc-asdf');`
+- Idea: also check for owed badges when the app opens (prevents this for future badges)
+- 2026-10-15: test accounts PSPS + COOP deleted (with their 16 Turbo runs, 1 badge, 1 session). 28 players left
+- Shark: `sounds/shark.mp3` is 9.5 s (audible to ~9.1 s, loudest 6–7 s), code assumes 7 s → decide: match code to clip, or trim clip
+- Unused files to delete before commit: `sounds/badge.mp3`, `sounds/enter_old.mp3` (`sounds/sonar.mp3` kept for later)
 - Phone retest (silent mode audio, Android + iPhone)
 - Step 5 polish: share button, help popup, favicon, README with screenshots
 - Optional: shorter URL (rename repo), purge test players before sharing widely
@@ -270,7 +275,9 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Ring hit sound: `sounds/play-shimmer.mp3` on every hit (min 0.3 s apart), pitch ±8%, 35% volume. (Sonar ping tried and dropped; `sounds/sonar.mp3` kept for later)
 - [x] Ring hit animation: smaller bump (1.5%) + a band of light and shadow sweeps through the Morse dashes, entering from the side the ripple came from (SVG gradient `#ring-shine` + `animateTransform`, overlay circle with the same dashes)
 - [x] 🦈 Easter egg: 15 taps within 6 s → a blurred shark silhouette swims across the deep layer (SVG, swaying tail, bobbing path, random direction), plays `sounds/shark.mp3`, scatters nearby dits/dahs, and drains the scene's colors (saturation 20% at the 5 s peak, back by 7 s = sound length; swim 7 s). Cooldown 1 min. Tune: SHARK_TAPS, SHARK_WINDOW_MS, SHARK_COOLDOWN_MS, SHARK_SWIM_MS in `js/splash.js`
-- [ ] User: add `sounds/shark.mp3`
+- [x] `sounds/shark.mp3` added (9.5 s; timing to be matched, see top of plan)
+- [x] 💡 Fun Morse facts: tap exactly 5 times + pause 1.5 s → a small dark card slides in near the bottom, stays 10 s, then dissolves into a cloud (blur + puffs). 15 facts in `js/facts.js` (own words; Britannica + well-known basics), no repeats until all seen
+- [x] A 1.5 s pause also resets the shark counter: shark = one continuous frenzy, facts never summon it (tested both ways)
 - Tune in `js/splash.js`: RIPPLE_RADIUS, RIPPLE_MS (must match `.ripple` 1.5s in style.css), RIPPLE_RINGS, AMBIENT, MAX_PARTICLES, PER_TAP
 
 ### 4.17 Daily keyboard readability (2026-10-14)
