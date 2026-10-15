@@ -307,6 +307,12 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [ ] User decision: DAW1 (7:03) and SHYT (5:30) earned Turtle under the old 5-min rule. Keep (default) or remove?
 - [x] New badges revealed one at a time, 2 s apart, each with its pop-in animation and `sounds/new-badge.mp3` (First Contact keeps `first-time.mp3`). Shared `js/badgeReveal.js` for Daily popup + Turbo game over; stops if the screen closes. `badge.mp3` retired (too big)
 
+### 4.20 Turbo fast bonus (2026-10-15)
+- [x] 3 fast correct answers in a row (within 2 s after the letter finished) = +½ heart; max 5 hearts. Slow / wrong / timeout resets the streak. Wrong still costs a whole heart
+- [x] Server-checked: migration `012_turbo_fast_hearts.sql` (lives → `halves`, 6 = 3 hearts, max 10; `fast_streak`; +0.6 s network slack). Tested in PGlite (both paths) + rolled-back run on Supabase; applied
+- [x] UI: half hearts (left half red), extra heart slots above 3, ⚡ streak pips under the hearts, "⚡ Fast streak! +½ ❤️" + sparkle on the heart that grew; intro text explains it
+- Note: responses still include `lives` (= halves / 2) so an old open tab doesn't break
+
 ### 5. Polish
 - [ ] Share button (emoji grid)
 - [ ] Help modal (how to play + Morse chart)

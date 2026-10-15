@@ -38,7 +38,8 @@ create table if not exists public.turbo_runs (
   started_at      timestamptz not null default now(),
   ended_at        timestamptz,                 -- null while playing (or abandoned)
   score           int not null default 0,
-  lives           int not null default 3,
+  halves          int not null default 6,      -- lives in half-hearts: 6 = 3 hearts, max 10
+  fast_streak     int not null default 0,      -- fast correct answers in a row (3 = +1 half)
   letters         int not null default 0,      -- letters served so far
   current_letter  text,
   current_wpm     int,
@@ -478,7 +479,7 @@ begin
   values (v_player, 1, v_letter, v_wpm, now())
   returning id into v_id;
   return json_build_object(
-    'run_id', v_id, 'score', 0, 'lives', 3,
+    'run_id', v_id, 'score', 0, 'halves', 6, 'lives', 3, 'streak', 0,
     'next', json_build_object('letter', v_letter, 'wpm', v_wpm, 'options', public._turbo_options(v_letter, 0)));
 end;
 $$;
@@ -493,8 +494,13 @@ as $$
 declare
   v_player  uuid := public._player_id(p_name, p_token);
   r         public.turbo_runs;
+  v_secs    numeric;
+  v_elapsed numeric;
   v_late    boolean;
   v_correct boolean;
+  v_fast    boolean := false;
+  v_bonus   boolean := false;   -- a fast streak was completed (+½ heart)
+  v_capped  boolean := false;   -- …but hearts were already at the max
   v_answer  text;
   v_letter  text;
   v_wpm     int;
@@ -506,29 +512,45 @@ begin
   if not found then raise exception 'NO_RUN'; end if;
 
   v_answer  := r.current_letter;
-  v_late    := extract(epoch from now() - r.sent_at)
-               > public._letter_seconds(r.current_letter, r.current_wpm) + 0.4 + 5 + 2.5;
+  v_secs    := public._letter_seconds(r.current_letter, r.current_wpm) + 0.4;
+  v_elapsed := extract(epoch from now() - r.sent_at);
+  v_late    := v_elapsed > v_secs + 5 + 2.5;
   v_correct := p_choice is not null and upper(p_choice) = r.current_letter and not v_late;
 
-  if v_correct then r.score := r.score + 1; else r.lives := r.lives - 1; end if;
+  if v_correct then
+    r.score := r.score + 1;
+    v_fast := v_elapsed <= v_secs + 2 + 0.6;
+    r.fast_streak := case when v_fast then r.fast_streak + 1 else 0 end;
+    if r.fast_streak >= 3 then
+      r.fast_streak := 0;
+      v_bonus := true;
+      v_capped := r.halves >= 10;
+      r.halves := least(10, r.halves + 1);
+    end if;
+  else
+    r.halves := r.halves - 2;
+    r.fast_streak := 0;
+  end if;
 
-  if r.lives <= 0 then
+  if r.halves <= 0 then
     update public.turbo_runs
-    set score = r.score, lives = 0, ended_at = now(), current_letter = null, sent_at = null
+    set score = r.score, halves = 0, fast_streak = 0, ended_at = now(), current_letter = null, sent_at = null
     where id = r.id;
-    return json_build_object('correct', v_correct, 'answer', v_answer, 'late', v_late,
-                             'score', r.score, 'lives', 0, 'over', true);
+    return json_build_object('correct', v_correct, 'fast', v_fast, 'bonus', false, 'capped', false,
+                             'answer', v_answer, 'late', v_late, 'score', r.score,
+                             'halves', 0, 'lives', 0, 'streak', 0, 'over', true);
   end if;
 
   v_letter := public._turbo_letter(v_answer);
   v_wpm    := public._turbo_wpm(r.score);
   update public.turbo_runs
-  set score = r.score, lives = r.lives, letters = r.letters + 1,
+  set score = r.score, halves = r.halves, fast_streak = r.fast_streak, letters = r.letters + 1,
       current_letter = v_letter, current_wpm = v_wpm, sent_at = now()
   where id = r.id;
   return json_build_object(
-    'correct', v_correct, 'answer', v_answer, 'late', v_late,
-    'score', r.score, 'lives', r.lives, 'over', false,
+    'correct', v_correct, 'fast', v_fast, 'bonus', v_bonus, 'capped', v_capped,
+    'answer', v_answer, 'late', v_late, 'score', r.score,
+    'halves', r.halves, 'lives', r.halves / 2.0, 'streak', r.fast_streak, 'over', false,
     'next', json_build_object('letter', v_letter, 'wpm', v_wpm, 'options', public._turbo_options(v_letter, r.score)));
 end;
 $$;

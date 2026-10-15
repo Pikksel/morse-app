@@ -14,7 +14,9 @@ const $ = (id) => document.getElementById(id);
 const ANSWER_MS = 5000;   // time to answer, starting when the letter has finished playing
 const RIGHT_MS = 650;     // pause after a correct answer before the next letter
 const WRONG_MS = 1200;    // a bit longer after a miss: time to see the right letter
-const MAX_LIVES = 3;
+const START_HALVES = 6;   // lives in half-hearts: 6 = 3 hearts (the server keeps the real count)
+const MAX_HALVES = 10;    // 5 hearts
+const FAST_FOR_BONUS = 3; // fast answers in a row for +½ heart
 const PATTERNS = ['dots', 'stripes', 'rings', 'grid', 'cross'];
 
 let run = null;           // { id, score, lives }
@@ -40,9 +42,34 @@ function newSessionLook() {
 
 // ---------- Rendering ----------
 
+let justGained = false; // next paint: make the heart that grew sparkle
+
+// Hearts: full, half or empty. At least 3 slots, more when bonus halves go above 3 hearts.
+function paintHearts(halves) {
+  const box = $('turbo-lives');
+  const slots = Math.max(START_HALVES, Math.min(MAX_HALVES, halves + (halves % 2))) / 2;
+  box.innerHTML = '';
+  for (let i = 0; i < slots; i++) {
+    const heart = document.createElement('span');
+    heart.className = `heart ${halves >= 2 * i + 2 ? 'full' : halves === 2 * i + 1 ? 'half' : 'empty'}`;
+    box.append(heart);
+  }
+  if (justGained) {
+    [...box.querySelectorAll('.full, .half')].at(-1)?.classList.add('gained');
+    justGained = false;
+  }
+  box.setAttribute('aria-label', `${halves / 2} of ${slots} lives`);
+}
+
+// ⚡ pips under the hearts: how many fast answers in a row so far
+function paintStreak(streak) {
+  $('turbo-streak').innerHTML = Array.from({ length: FAST_FOR_BONUS },
+    (_, i) => `<i class="${i < streak ? 'lit' : ''}"></i>`).join('');
+}
+
 function paintStatus() {
-  const lives = run?.lives ?? MAX_LIVES;
-  $('turbo-lives').textContent = '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
+  paintHearts(run?.halves ?? START_HALVES);
+  paintStreak(run?.streak ?? 0);
   $('turbo-score').textContent = run?.score ?? 0;
   $('turbo-wpm').textContent = current ? `${current.wpm} WPM` : '';
 }
@@ -154,6 +181,10 @@ async function answer(choice) {
   if (res.correct) {
     blip('correct');
     orb(res.answer, 'right');
+    if (res.bonus) {
+      message(res.capped ? '⚡ Fast streak! (max hearts)' : '⚡ Fast streak! +½ ❤️');
+      justGained = !res.capped;
+    }
   } else {
     blip('wrong');
     tapped?.classList.add('wrong');
@@ -164,7 +195,8 @@ async function answer(choice) {
     $('turbo-lives').classList.add('hit');
   }
   run.score = res.score;
-  run.lives = res.lives;
+  run.halves = res.halves;
+  run.streak = res.streak;
   paintStatus();
 
   setTimeout(() => {
@@ -187,7 +219,7 @@ async function startRun() {
   try {
     prevBest = (await getTurboBest(player.name))?.alltime ?? 0;
     const start = await turboStart(player.name, player.token);
-    run = { id: start.run_id, score: start.score, lives: start.lives };
+    run = { id: start.run_id, score: start.score, halves: start.halves ?? START_HALVES, streak: 0 };
     notifyState();
     ask(start.next);
   } catch (err) {

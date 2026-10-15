@@ -528,8 +528,29 @@ button.link {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
 }
-.lives { font-size: 1.3rem; letter-spacing: 2px; }
+.lives-box { display: grid; gap: 4px; justify-items: start; }
+.lives { display: flex; gap: 3px; font-size: 1.3rem; line-height: 1; }
 .lives.hit { animation: shake 0.35s; }
+
+/* Hearts: full ❤️, empty 🖤, half = empty heart with the left half of a red one on top */
+.heart { position: relative; display: inline-block; }
+.heart.full::before { content: '❤️'; }
+.heart.empty::before, .heart.half::before { content: '🖤'; }
+.heart.half::after {
+  content: '❤️';
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 50% 0 0);
+}
+.heart.gained { animation: heart-gain 0.9s ease-out; }
+@keyframes heart-gain {
+  30% { transform: scale(1.35); filter: drop-shadow(0 0 8px #ffd34d); }
+}
+
+/* Fast streak: 3 small pips that light up yellow */
+.streak { display: flex; gap: 4px; padding-left: 2px; }
+.streak i { width: 14px; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.streak i.lit { background: #ffd34d; box-shadow: 0 0 6px #ffd34d; }
 .turbo-score { display: grid; justify-items: center; line-height: 1; }
 .turbo-score b { font-family: 'Orbitron', var(--mono); font-size: 2.4rem; }
 .turbo-score small { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }

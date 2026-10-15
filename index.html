@@ -125,7 +125,10 @@
     <!-- Turbo: one letter, three options, three lives -->
     <section id="turbo" hidden>
       <div class="turbo-status">
-        <span id="turbo-lives" class="lives" aria-label="Lives"></span>
+        <span class="lives-box">
+          <span id="turbo-lives" class="lives"></span>
+          <span id="turbo-streak" class="streak" aria-label="Fast answers in a row"></span>
+        </span>
         <span class="turbo-score"><b id="turbo-score">0</b><small>score</small></span>
         <span id="turbo-wpm" class="turbo-wpm"></span>
       </div>
@@ -139,7 +142,7 @@
       <div id="turbo-options" class="turbo-options" hidden></div>
 
       <div id="turbo-intro" class="turbo-intro">
-        <p class="hint">One letter plays once. Pick it from three. Three lives, and it gets faster. 5 seconds per letter.</p>
+        <p class="hint">One letter plays once. Pick it from three. Three lives, and it gets faster. 5 seconds per letter.<br>⚡ Answer within 2 s three times in a row: +½ ❤️ (up to 5).</p>
         <button id="turbo-start" type="button" class="play turbo-start">▶ Start</button>
       </div>
 
