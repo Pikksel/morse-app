@@ -9,15 +9,18 @@ const sounds = {
   firstContact: new Audio('sounds/first-time.mp3'), // First Contact badge
   enter: new Audio('sounds/enter.mp3'), // title screen PLAY
   shark: new Audio('sounds/shark.mp3'), // easter egg on the title screen (silent until the file exists)
+  badgeTap: new Audio('sounds/soft-tap.mp3'),       // badges page: tap an unlocked badge
+  badgeTapNo: new Audio('sounds/soft-tap-no.mp3'),  // badges page: tap a locked badge
 };
+const VOLUME = { badgeTap: 0.5, badgeTapNo: 0.5 }; // everything else plays at 0.7
+for (const [name, audio] of Object.entries(sounds)) {
+  audio.preload = 'auto';
+  audio.volume = VOLUME[name] ?? 0.7;
+}
+
 // 🐣 Easy mode plays its own version of these sounds.
 const EASY_SOUNDS = { win: 'cuteWin', tap: 'tapCute' };
 const forMode = (name) => (isEasy() && EASY_SOUNDS[name]) || name;
-
-for (const audio of Object.values(sounds)) {
-  audio.preload = 'auto';
-  audio.volume = 0.7;
-}
 
 // VIP players: their own version of a sound, by callsign. Anything not listed uses the normal sound.
 // Note: the repo is public, so this list (and the files) can be seen by anyone.

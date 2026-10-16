@@ -42,6 +42,10 @@ export const awardBadges = async (name, token) =>
 export const getBadges = (name) =>
   rpc('get_badges', { p_name: name });
 
+// How many players have each badge: [{ badge_id, players }] (badges nobody has are left out).
+export const getBadgeCounts = () =>
+  rpc('get_badge_counts');
+
 // Current rank for a day (others may have finished after you). null = no score that day.
 export const getRank = (name, day) =>
   rpc('get_rank', { p_name: name, p_day: day, p_mode: p_mode() });

@@ -8,7 +8,7 @@
 > **New Claude chat?** Say: *"Read Morse-web/PLAN.md and continue."*
 
 ## ▶ Where we left off (2026-10-15)
-Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–015 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
+Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–016 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
 Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked, half-heart fast bonus), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg, fun facts), calm background when not playing, pause timer when page hidden.
 **New 2026-10-15: 🐣 Easy mode + 🎀 cute Morse sound (step 4.21)**, built and tested locally, not pushed yet. The user should test it on the phone (a real game in Easy Daily + Easy Turbo, 🎀 sound on/off).
 Open:
@@ -337,6 +337,12 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Weekend leaderboard "Today" shows Friday; "Next Daily in" countdown skips the weekend
 - 5 players already qualify for Streak 3 (DAW1, RM1, SHYT, SNOM, USSR): awarded with the popup at their next game
 - ⚠️ Push before Saturday 00:00 Swedish time, else the live (old) site lets Normal players play on Saturday and the score is refused
+
+### 4.25 Small fixes (2026-10-16)
+- [x] Badges page: "Unlocked today / yesterday / X days ago" instead of MM/DD (`daysAgo` in badgesView.js, Swedish calendar days)
+- [x] Cute Morse sound toggle icon: 🎵 (was 🎀)
+- [x] Badges page: tapping a badge also shows *"X players have this"* in italics (DB migration 016: `get_badge_counts()`, counts only)
+- [x] Badges page tap sounds (both modes): unlocked `soft-tap.mp3`, locked `soft-tap-no.mp3`, both at 50% volume (`VOLUME` in sfx.js)
 
 ### 4.24 Day = Swedish time (2026-10-16)
 - [x] A new Daily starts at **00:00 Swedish time** (Europe/Stockholm, summer/winter time automatic) instead of 00:00 UTC. Weekends, "Next Daily in" countdowns and the Turbo "today" leaderboard follow it too

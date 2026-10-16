@@ -1315,3 +1315,6 @@ body.easy { --concealed: #cbc3d8; }          /* cute grey */
 .weekend .actions { justify-content: center; margin-top: 18px; }
 @keyframes moon-float { to { transform: translateY(-6px) rotate(-8deg); } }
 @media (prefers-reduced-motion: reduce) { .weekend-moon { animation: none; } }
+
+/* Badges page: "X players have this" under the badge text */
+.badge-detail em { display: block; margin-top: 2px; font-size: 0.8rem; opacity: 0.8; }

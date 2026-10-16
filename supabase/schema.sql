@@ -395,9 +395,19 @@ as $$
   order by pb.earned_at
 $$;
 
+-- How many players have each badge (badges page: "X players have this"). Counts only, no names.
+create or replace function public.get_badge_counts()
+returns table (badge_id text, players bigint)
+language sql stable security definer
+set search_path = public
+as $$
+  select badge, count(*) from public.player_badges group by badge
+$$;
+
 grant execute on function
   public.award_badges(text, text),
-  public.get_badges(text)
+  public.get_badges(text),
+  public.get_badge_counts()
 to anon, authenticated;
 
 -- ---------- Turbo mode (server-checked: the DB picks letters, checks answers, keeps the score) ----------
