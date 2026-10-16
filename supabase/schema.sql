@@ -251,7 +251,15 @@ as $$
   limit least(p_limit, 100)
 $$;
 
+-- Total number of players (welcome box). A number only, no names.
+create or replace function public.get_player_count()
+returns bigint
+language sql stable security definer
+set search_path = public
+as $$ select count(*) from public.players $$;
+
 grant execute on function
+  public.get_player_count(),
   public.register(text, text),
   public.login(text, text),
   public.logout(text, text),

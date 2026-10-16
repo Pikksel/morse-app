@@ -109,6 +109,23 @@
       </div>
     </header>
 
+    <!-- Welcome box: once per device and mode (js/welcome.js) -->
+    <aside id="welcome" class="welcome card" aria-labelledby="welcome-title" hidden>
+      <button id="welcome-close" type="button" class="icon-btn dialog-close" aria-label="Close">✕</button>
+      <h2 id="welcome-title"></h2>
+      <p id="welcome-text"></p>
+      <ul class="welcome-icons">
+        <li><span aria-hidden="true">🏆</span> <b>Leaderboard:</b> today and all-time</li>
+        <li><span aria-hidden="true">🏅</span> <b>Badges:</b> collect them as you play</li>
+        <li><span aria-hidden="true">🎵</span> <b>Cute sound:</b> dits and dahs go “ding”</li>
+        <li><span aria-hidden="true">⟵</span> <b>Exit:</b> back to start (Easy / Normal)</li>
+        <li><span aria-hidden="true">⚡</span> <b>Turbo:</b> switch game mode and go faster!</li>
+      </ul>
+      <p id="welcome-players" class="welcome-players"></p>
+      <p class="hint welcome-joke">For any concerns or questions, reach out to our customer service… oh wait, there is no customer service. 🙃</p>
+      <button id="welcome-ok" type="button">Got it!</button>
+    </aside>
+
     <!-- Daily game -->
     <section id="game" hidden>
       <!-- Normal on Saturday/Sunday: no Daily, just this card -->

@@ -9,6 +9,7 @@ import { getMode, setGameMode } from './mode.js';
 import { enterTurbo, leaveTurbo, isTurboRunning } from './turbo.js';
 import { setAmbient } from './ambient.js';
 import { runSplash } from './splash.js';
+import { maybeShowWelcome, hideWelcome } from './welcome.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,6 +19,7 @@ function show(screen, { enter = false } = {}) {
   if (screen !== 'turbo' && !$('turbo').hidden) leaveTurbo();
   for (const s of screens) $(s).hidden = s !== screen;
   $('app-bar').hidden = screen !== 'game' && screen !== 'turbo'; // header only in the games
+  if ($('app-bar').hidden) hideWelcome();
   if (enter) {
     $(screen).classList.remove('screen-enter');
     void $(screen).offsetWidth; // restart the animation
@@ -179,6 +181,7 @@ function goHome(player, { enter = false } = {}) {
   $('player-name').textContent = player.name;
   if (isTurboLink()) openTurbo({ enter });
   else startGame(player, { enter });
+  maybeShowWelcome();
 }
 
 function startGame(player, { enter = false } = {}) {

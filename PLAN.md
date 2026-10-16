@@ -8,13 +8,13 @@
 > **New Claude chat?** Say: *"Read Morse-web/PLAN.md and continue."*
 
 ## ▶ Where we left off (2026-10-15)
-Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–016 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
+Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–017 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
 Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked, half-heart fast bonus), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg, fun facts), calm background when not playing, pause timer when page hidden.
 **New 2026-10-15: 🐣 Easy mode + 🎀 cute Morse sound (step 4.21)**, built and tested locally, not pushed yet. The user should test it on the phone (a real game in Easy Daily + Easy Turbo, 🎀 sound on/off).
 Open:
 - Decide: keep or remove Turtle for DAW1 / SHYT (earned under old 5-min rule)
 - 2026-10-15: badge backfill (players who qualified but hadn't finished a game since badges launched): 9 badges to ABC, ASDF, FIRS, SNOM, TAGG. 0 badges still owed
-- ⏰ Debug rule (migration 011, pg_cron): on **2026-10-16 05:01 UTC** ABC and ASDF are deleted if they haven't played (Daily or Turbo) since 2026-10-15 05:00 UTC; the job then removes itself. Tested in rolled-back transactions (delete path + keep-if-played path). Check the result: `select * from cron.job_run_details order by start_time desc limit 5;` and whether ABC/ASDF still exist. Cancel before then: `select cron.unschedule('delete-test-accounts-abc-asdf');`
+- ✅ Debug rule (migration 011) ran 2026-10-16 05:01 UTC: test accounts ABC + ASDF deleted, job removed itself
 - Idea: also check for owed badges when the app opens (prevents this for future badges)
 - 2026-10-15: test accounts PSPS + COOP deleted (with their 16 Turbo runs, 1 badge, 1 session). 28 players left
 - Shark: `sounds/shark.mp3` is 9.5 s (audible to ~9.1 s, loudest 6–7 s), code assumes 7 s → decide: match code to clip, or trim clip
@@ -343,6 +343,10 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Cute Morse sound toggle icon: 🎵 (was 🎀)
 - [x] Badges page: tapping a badge also shows *"X players have this"* in italics (DB migration 016: `get_badge_counts()`, counts only)
 - [x] Badges page tap sounds (both modes): unlocked `soft-tap.mp3`, locked `soft-tap-no.mp3`, both at 50% volume (`VOLUME` in sfx.js)
+
+### 4.26 Welcome box (2026-10-16)
+- [x] First time a player enters the game: welcome card under the header (title, short pitch, what the icons do, "👥 X players have joined", customer-service joke, "Got it!"). Once per device; Normal and 🐣 Easy each have their own text (`js/welcome.js`, localStorage `morse-web:welcome:<mode>`)
+- [x] DB migration 017: `get_player_count()` (a number only)
 
 ### 4.24 Day = Swedish time (2026-10-16)
 - [x] A new Daily starts at **00:00 Swedish time** (Europe/Stockholm, summer/winter time automatic) instead of 00:00 UTC. Weekends, "Next Daily in" countdowns and the Turbo "today" leaderboard follow it too
