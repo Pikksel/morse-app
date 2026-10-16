@@ -4,7 +4,8 @@
 // - 25 tries. Each Play costs one try and grants one guess (a blind Guess costs a try too).
 // - Speed starts at 35 WPM and drops 5 WPM every 4 tries, down to 10 (35 ×4, 30 ×4 ... 15 ×4, 10 ×5).
 // - Blanks are allowed. Correct letters turn green; no other hints.
-// 🐣 Easy: its own daily word, slower speeds (20 → 5 WPM) and the word's Morse as a hint after 5 tries.
+// - Normal: 5 random letters (not a word) since RANDOM_FROM. 🐣 Easy: a real word,
+//   slower speeds (20 → 5 WPM) and the word's Morse as a hint after 5 tries.
 import { ANSWERS } from './words.js';
 import { getMode } from './mode.js';
 
@@ -15,17 +16,84 @@ export const BLANK = ' ';
 const EPOCH = Date.UTC(2026, 0, 1);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// 'YYYY-MM-DD' in UTC: same for every player, changes at 00:00 UTC.
+// The day follows Swedish time: a new Daily at 00:00 in Sweden, for every player wherever they are
+// (the database uses the same clock, see _today() in schema.sql).
+const TIME_ZONE = 'Europe/Stockholm';
+const swedishDate = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+const swedishClock = new Intl.DateTimeFormat('en-US', {
+  timeZone: TIME_ZONE, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric',
+  hour: 'numeric', minute: 'numeric', second: 'numeric',
+});
+
+// 'YYYY-MM-DD' in Sweden.
 export function todayKey(now = new Date()) {
-  return now.toISOString().slice(0, 10);
+  return swedishDate.format(now); // en-CA formats as 2026-10-16
 }
 
-// Easy uses the same list, half a list further on: a different word than Normal every day.
+// Swedish time minus UTC at that moment, in ms (+1 h in winter, +2 h in summer).
+function swedishOffset(ms) {
+  const p = Object.fromEntries(swedishClock.formatToParts(ms).map(({ type, value }) => [type, Number(value)]));
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(ms / 1000) * 1000;
+}
+
+// The moment it is 00:00 in Sweden on that day.
+function swedishMidnight(dayKey) {
+  const utcMidnight = Date.parse(dayKey);
+  return utcMidnight - swedishOffset(utcMidnight);
+}
+
+// Normal switched from words to random letters on this day (earlier days keep their word).
+const RANDOM_FROM = '2026-10-17';
+
+// 5 letters A–Z from a random generator seeded with the day: the same for everyone, new every day.
+function randomLetters(dayNumber) {
+  let seed = (dayNumber * 2654435761) >>> 0; // mulberry32
+  const next = () => {
+    seed = (seed + 0x6d2b79f5) >>> 0;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return Array.from({ length: WORD_LENGTH }, () => String.fromCharCode(65 + Math.floor(next() * 26))).join('');
+}
+
 export function dailyWord(dayKey = todayKey(), mode = getMode()) {
-  const dayNumber = Math.floor((Date.parse(dayKey) - EPOCH) / DAY_MS)
-    + (mode === 'easy' ? Math.floor(ANSWERS.length / 2) : 0);
+  const days = Math.floor((Date.parse(dayKey) - EPOCH) / DAY_MS);
+  if (mode !== 'easy' && dayKey >= RANDOM_FROM) return randomLetters(days);
+  // Words: Easy uses the same list half a list further on, so it never matches an old Normal day.
+  const dayNumber = days + (mode === 'easy' ? Math.floor(ANSWERS.length / 2) : 0);
   const i = ((dayNumber % ANSWERS.length) + ANSWERS.length) % ANSWERS.length;
   return ANSWERS[i];
+}
+
+// ---------- Weekends: Normal Daily is Monday–Friday (Swedish time). Easy and Turbo are open every day. ----------
+
+const isWeekendDay = (dayKey) => [0, 6].includes(new Date(dayKey).getUTCDay());
+const addDays = (dayKey, n) => new Date(Date.parse(dayKey) + n * DAY_MS).toISOString().slice(0, 10);
+
+// true on Saturday/Sunday in Normal: no Daily today.
+export const isWeekendBreak = (dayKey = todayKey()) => getMode() === 'normal' && isWeekendDay(dayKey);
+
+// The most recent day with a Daily (today, or Friday during the weekend break).
+export function lastDailyDay(dayKey = todayKey()) {
+  while (isWeekendBreak(dayKey)) dayKey = addDays(dayKey, -1);
+  return dayKey;
+}
+
+// When the next Daily starts (00:00 Swedish time; Normal skips the weekend).
+export function nextDailyAt(now = new Date()) {
+  let day = addDays(todayKey(now), 1);
+  while (isWeekendBreak(day)) day = addDays(day, 1);
+  return swedishMidnight(day);
+}
+
+// ms → '05:12:09', or '2d 05:12:09' when it's more than a day away.
+export function formatCountdown(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400);
+  const hms = [Math.floor(s / 3600) % 24, Math.floor(s / 60) % 60, s % 60].map((n) => String(n).padStart(2, '0')).join(':');
+  return d ? `${d}d ${hms}` : hms;
 }
 
 export const TRIES_PER_SPEED = 4;

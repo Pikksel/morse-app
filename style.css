@@ -741,6 +741,7 @@ button.icon-btn {
   letter-spacing: 0.3em;
   color: var(--correct);
 }
+.result-word.concealed { font-size: 1.1rem; letter-spacing: 0.05em; color: var(--muted); }
 .result-morse {
   margin-top: 0;
   text-align: center;
@@ -1273,3 +1274,44 @@ body.easy button:not(:disabled):active { transform: scale(0.95); }
 @media (prefers-reduced-motion: reduce) {
   body.easy .square.correct, body.easy .lives.hit, .morse-hint, .cute-toggle[aria-pressed="true"] { animation: none; }
 }
+
+/* ---------- Finished Daily, answer hidden (no spoilers) ---------- */
+
+:root { --concealed: #8b9096; }
+@media (prefers-color-scheme: dark) { :root { --concealed: #3d4248; } }
+body.easy { --concealed: #cbc3d8; }          /* cute grey */
+@media (prefers-color-scheme: dark) { body.easy { --concealed: #4b4358; } }
+
+.word { position: relative; }
+.square.concealed { background: var(--concealed); border-color: var(--concealed); color: transparent; }
+.word.concealed::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 8px 0 0;            /* same box as the squares (.word has padding-top: 8px) */
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 7vw, 1.8rem);
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+  color: #fff;
+  opacity: 0.75;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.25);
+  pointer-events: none;
+  animation: concealed-in 0.8s ease;
+}
+@keyframes concealed-in { from { opacity: 0; } }
+
+/* ---------- Weekend break (Normal, Saturday/Sunday) ---------- */
+
+#game.weekend-break > :not(#weekend) { display: none; }
+.weekend { margin-top: 24px; text-align: center; animation: screen-in 0.6s ease; }
+.weekend[hidden] { display: none; }
+.weekend h2 { margin: 0; font-family: var(--display); }
+.weekend > * + * { margin-top: 10px; }
+.weekend-moon { margin: 0; font-size: 3rem; line-height: 1; animation: moon-float 4s ease-in-out infinite alternate; }
+#weekend-countdown { font-family: var(--mono); color: var(--accent); }
+.weekend .actions { justify-content: center; margin-top: 18px; }
+@keyframes moon-float { to { transform: translateY(-6px) rotate(-8deg); } }
+@media (prefers-reduced-motion: reduce) { .weekend-moon { animation: none; } }

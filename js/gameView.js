@@ -2,11 +2,12 @@
 import {
   WORD_LENGTH, MAX_TRIES, BLANK, dailyWord, wpmForTry, evaluate, knownLetters,
   loadState, saveState, useTry, addGuess, elapsedMs, formatTime, pauseTimer, resumeTimer,
-  showsHint, HINT_AFTER,
+  showsHint, HINT_AFTER, isWeekendBreak, nextDailyAt, formatCountdown,
 } from './game.js';
 import { MORSE, play, stop, tone } from './morse.js';
 import { playSfx } from './sfx.js';
 import { confetti } from './confetti.js';
+import { getMode } from './mode.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +23,14 @@ let lastResult = null; // evaluation shown after a guess, until the next Play
 let playing = false;
 let sounding = -1;   // index of the square whose letter is playing right now
 let timerId = null;
+let weekendId = null;   // weekend card countdown
 let onGameOver = () => {};
+
+// No spoilers: a finished game shows its answer only right after finishing, until the page is
+// hidden (phone locked, app switched) or reloaded (⟵ Exit). After that the squares are covered.
+let revealedKey = null;
+const gameKey = () => `${state.owner}:${state.day}:${getMode()}`;
+export const isConcealed = () => !!state && state.status !== 'playing' && revealedKey !== gameKey();
 
 // ---------- Rendering ----------
 
@@ -89,6 +97,7 @@ function paintSquares(animate = false) {
     else if (letter !== BLANK) cls += ' filled';
     if (i === cursor && canType()) cls += ' cursor';
     if (i === sounding) cls += ' sounding';
+    if (isConcealed()) cls = 'square concealed';
     sq.className = cls;
 
     if (animate) {
@@ -124,6 +133,7 @@ function paintPlayButton() {
 function paintHistory() {
   const list = $('history');
   list.innerHTML = '';
+  list.hidden = isConcealed(); // the last guess would show the answer
   const answer = dailyWord(state.day);
   for (const { word, tryNumber } of [...state.guesses].reverse()) {
     const li = document.createElement('li');
@@ -324,16 +334,11 @@ function finish(restored = false) {
   stop();
   playing = false;
   sounding = -1;
-  const answer = dailyWord(state.day);
-  slots = [...answer];
-  lastResult = evaluate(answer, answer).map(() => state.status === 'won');
+  if (!restored) revealedKey = gameKey(); // just finished: show the answer for now
   locked = [];
   stale = [];
   cursor = -1;
-  paintAll();
-  message(state.status === 'won'
-    ? `Solved on try ${state.tries}/${MAX_TRIES} in ${formatTime(elapsedMs(state))}`
-    : `Out of tries. The word was ${answer}.`);
+  paintFinished();
 
   // Celebrate only the moment it happens, not when reopening a finished game.
   if (!restored) {
@@ -346,6 +351,22 @@ function finish(restored = false) {
     }
   }
   onGameOver(state, restored);
+}
+
+// Finished game: the answer, or covered squares with a soft SOLVED over them (see isConcealed).
+function paintFinished() {
+  const hide = isConcealed();
+  const answer = dailyWord(state.day);
+  slots = hide ? Array(WORD_LENGTH).fill(BLANK) : [...answer];
+  lastResult = hide ? null : [...answer].map(() => state.status === 'won');
+  paintAll();
+  $('word').classList.toggle('concealed', hide);
+  $('word').dataset.label = state.status === 'won' ? 'SOLVED' : 'DONE';
+  const result = state.status === 'won'
+    ? `Solved on try ${state.tries}/${MAX_TRIES} in ${formatTime(elapsedMs(state))}`
+    : 'Out of tries.';
+  if (hide) message(`${result.replace(/\.?$/, '.')} Answer hidden, so nobody gets spoiled.`);
+  else message(state.status === 'won' ? result : `Out of tries. The answer was ${answer}.`);
 }
 
 // ---------- Public ----------
@@ -361,6 +382,10 @@ function wireEvents() {
     if (!state) return;
     if (document.hidden) {
       pauseTimer(state);
+      if (revealedKey) {           // leaving the page covers the answer
+        revealedKey = null;
+        if (state.status !== 'playing') paintFinished();
+      }
     } else {
       resumeTimer(state);
       tick();
@@ -399,7 +424,24 @@ export function initGame({ owner, onFinish } = {}) {
   state = loadState(owner);
   playing = false;
 
+  // Normal on Saturday/Sunday: only the weekend card (the Daily is Monday–Friday).
+  const weekend = isWeekendBreak();
+  $('game').classList.toggle('weekend-break', weekend);
+  $('weekend').hidden = !weekend;
+  clearInterval(weekendId);
+  if (weekend) {
+    clearInterval(timerId);
+    const tick = () => {
+      const ms = nextDailyAt() - Date.now();
+      $('weekend-countdown').textContent = ms > 0 ? formatCountdown(ms) : 'now. Reload the page!';
+    };
+    tick();
+    weekendId = setInterval(tick, 1000);
+    return;
+  }
+
   buildSquares();
+  $('word').classList.remove('concealed');
   buildMeter();
   buildKeyboard();
   wireEvents();

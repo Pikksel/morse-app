@@ -1,10 +1,11 @@
 // Results popup: today's result, leaderboards (today / all-time), countdown to the next word.
 import { getDailyLeaderboard, getAlltimeLeaderboard, getRank, getTurboLeaderboard } from './api.js';
-import { MAX_TRIES, dailyWord, elapsedMs, formatTime, todayKey } from './game.js';
+import { MAX_TRIES, dailyWord, elapsedMs, formatTime, lastDailyDay, nextDailyAt, formatCountdown, isWeekendBreak } from './game.js';
 import { MORSE } from './morse.js';
 import { BADGES } from './badges.js';
 import { revealSequence } from './badgeReveal.js';
 import { isEasy } from './mode.js';
+import { isConcealed } from './gameView.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,10 +14,12 @@ let tab = 'today';      // 'today' | 'alltime' | 'turbo'
 let turboScope = 'today'; // Turbo tab: 'today' | 'alltime'
 let loadId = 0;         // ignores slow answers after switching tabs
 let countdownId = null;
+let shownState = null;  // the game whose summary is showing
 
 // ---------- Summary ----------
 
 function paintSummary(state) {
+  shownState = state;
   const finished = state && state.status !== 'playing';
   $('result-summary').hidden = !finished;
   $('board-title').hidden = finished;
@@ -24,8 +27,11 @@ function paintSummary(state) {
 
   const answer = dailyWord(state.day);
   $('results-title').textContent = state.status === 'won' ? 'Solved!' : 'Out of tries';
-  $('result-word').textContent = answer;
-  $('result-morse').textContent = [...answer].map((c) => MORSE[c]).join('   ');
+  // No spoilers once the page has been left (see isConcealed in gameView.js)
+  const hide = isConcealed();
+  $('result-word').classList.toggle('concealed', hide);
+  $('result-word').textContent = hide ? '🔒 Answer hidden' : answer;
+  $('result-morse').textContent = hide ? 'So nobody gets spoiled.' : [...answer].map((c) => MORSE[c]).join('   ');
   $('stat-tries').textContent = state.status === 'won' ? `${state.tries}/${MAX_TRIES}` : '✗';
   $('stat-time').textContent = formatTime(elapsedMs(state));
   $('stat-rank').textContent = state.rank ? `#${state.rank}` : '–';
@@ -109,12 +115,13 @@ async function loadBoard() {
       scrollToMe();
     } else if (tab === 'today') {
       $('board-head').replaceChildren(head(['#', 'Call', 'Tries', 'Time']));
-      const rows = await getDailyLeaderboard(todayKey());
+      const rows = await getDailyLeaderboard(lastDailyDay()); // weekend break: Friday's results
       if (stale()) return;
       for (const r of rows) {
         body.append(row([r.rank, r.name, triesText(r.guesses), formatTime(r.time_ms)], r.name === me));
       }
-      note.textContent = rows.length ? '' : 'No scores yet today. Be the first!';
+      if (isWeekendBreak()) note.textContent = 'Friday’s results. The Daily is Monday–Friday.';
+      else note.textContent = rows.length ? '' : 'No scores yet today. Be the first!';
       scrollToMe();
     } else {
       $('board-head').replaceChildren(head(['#', 'Call', 'Games', 'Avg tries']));
@@ -160,16 +167,11 @@ export function showNewBadges(ids) {
   else pendingBadges = ids;
 }
 
-// ---------- Countdown to 00:00 UTC ----------
+// ---------- Countdown to the next Daily (00:00 Swedish time; Normal skips the weekend) ----------
 
 function tickCountdown() {
-  const now = new Date();
-  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
-  const s = Math.max(0, Math.floor((next - now) / 1000));
-  const hh = String(Math.floor(s / 3600)).padStart(2, '0');
-  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-  const ss = String(s % 60).padStart(2, '0');
-  $('countdown').textContent = s ? `${hh}:${mm}:${ss}` : 'now. Reload the page!';
+  const ms = nextDailyAt() - Date.now();
+  $('countdown').textContent = ms > 0 ? formatCountdown(ms) : 'now. Reload the page!';
 }
 
 // ---------- Public ----------
@@ -204,6 +206,11 @@ export function refreshResults(state) {
 }
 
 $('results-close').addEventListener('click', () => $('results').close());
+// Phone locked / app switched with the popup open: cover the answer here too
+// (after gameView.js has handled the same event).
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && $('results').open) setTimeout(() => paintSummary(shownState));
+});
 $('results').addEventListener('close', () => { clearInterval(countdownId); cancelReveal(); });
 // Click on the dimmed backdrop (outside the box) closes too.
 $('results').addEventListener('click', (e) => {

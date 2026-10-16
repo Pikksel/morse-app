@@ -5,7 +5,7 @@ import { saveState, score, elapsedMs, pauseTimer } from './game.js';
 import { openResults, refreshResults, setStatus, showNewBadges } from './results.js';
 import { openBadges } from './badgesView.js';
 import { beep, stop, tone, isCute, setCute } from './morse.js';
-import { getMode } from './mode.js';
+import { getMode, setGameMode } from './mode.js';
 import { enterTurbo, leaveTurbo, isTurboRunning } from './turbo.js';
 import { setAmbient } from './ambient.js';
 import { runSplash } from './splash.js';
@@ -215,6 +215,7 @@ window.addEventListener('hashchange', () => {
 const SUBMIT_ERRORS = {
   ALREADY_SUBMITTED: 'You already have a score today (another device?). Your first result counts.',
   WRONG_DAY: 'The day ended before you finished, so this score wasn’t saved.',
+  WEEKEND: 'The Daily is Monday–Friday, so this score wasn’t saved.',
 };
 
 let resultsShownFor = null; // "CALL:day" whose results popup was already shown this session
@@ -270,6 +271,14 @@ $('exit').addEventListener('click', () => {
   stop();
   if (currentState()) pauseTimer(currentState()); // the title screen time doesn't count
   history.replaceState(null, '', location.pathname + location.search); // start on Daily next time
+  location.reload();
+});
+
+// Weekend card (Normal, Saturday/Sunday): go play Turbo, or switch to Easy (needs a fresh start).
+$('weekend-turbo').addEventListener('click', () => $('mode-turbo').click());
+$('weekend-easy').addEventListener('click', () => {
+  setGameMode('easy');
+  history.replaceState(null, '', location.pathname + location.search);
   location.reload();
 });
 

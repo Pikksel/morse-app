@@ -10,11 +10,14 @@ export const BADGES = {
   qrq:           { icon: '🚀', name: 'QRQ',             desc: 'Solved on the very first try' },
   never_give_up: { icon: '💪', name: 'Never Give Up',   desc: 'Solved in the last 3 tries' },
   turtle:        { icon: '🐢', name: 'Turtle',          desc: 'Solved a word after over 8 minutes' },
-  streak_5:      { icon: '🔥', name: 'Streak 5',        desc: 'Played 5 days in a row' },
-  streak_30:     { icon: '☄️', name: 'Streak 30',       desc: 'Played 30 days in a row' },
+  // Streaks count weekdays only: Friday → Monday is "in a row", weekends don't count
+  streak_3:      { icon: '🕯️', name: 'Streak 3',        desc: 'Played 3 weekdays in a row' },
+  streak_5:      { icon: '🔥', name: 'Streak 5',        desc: 'Played a full week (5 weekdays in a row)' },
+  streak_10:     { icon: '☄️', name: 'Streak 10',       desc: 'Played 10 weekdays in a row' },
+  streak_15:     { icon: '🌋', name: 'Streak 15',       desc: 'Played 15 weekdays in a row' },
   top_band:      { icon: '🥇', name: 'Top of the Band', desc: '#1 of the day' },
-  week_champion: { icon: '👑', name: 'Week Champion',   desc: '#1 five days in a row' },
-  time_to_go_home: { icon: '🏠', name: 'Time to Go Home', desc: 'Missed the word 2 days in a row' },
+  week_champion: { icon: '👑', name: 'Week Champion',   desc: '#1 five weekdays in a row' },
+  time_to_go_home: { icon: '🏠', name: 'Time to Go Home', desc: 'Missed the Daily 2 weekdays in a row' },
   turbocharged:  { icon: '🏎️', name: 'Turbocharged',    desc: 'Played a Turbo run' },
   // 🐣 Easy
   easy_hatchling:   { mode: 'easy', icon: '🐣', name: 'Hatchling',     desc: 'Played your first Easy game' },

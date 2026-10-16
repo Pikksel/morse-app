@@ -56,7 +56,7 @@
     <section id="start" hidden>
       <h1>Morse Daily</h1>
       <p class="morse" aria-hidden="true">-- --- .-. ... .</p>
-      <p>Hear one word in Morse code each day. Guess it in 25 tries.</p>
+      <p>Hear 5 Morse letters each day. Guess them in 25 tries.</p>
 
       <div class="tabs" role="tablist">
         <button type="button" role="tab" id="tab-new" aria-selected="true">New player</button>
@@ -111,6 +111,17 @@
 
     <!-- Daily game -->
     <section id="game" hidden>
+      <!-- Normal on Saturday/Sunday: no Daily, just this card -->
+      <div id="weekend" class="weekend card" hidden>
+        <p class="weekend-moon" aria-hidden="true">🌙</p>
+        <h2>Weekend break</h2>
+        <p>The Daily is Monday–Friday. New letters in <b id="weekend-countdown"></b></p>
+        <p class="hint">Weekends don't break your streak. Meanwhile:</p>
+        <div class="actions">
+          <button id="weekend-turbo" type="button" class="play">⚡ Play Turbo</button>
+          <button id="weekend-easy" type="button" class="secondary">🐣 Try Easy</button>
+        </div>
+      </div>
       <div class="status">
         <span id="try-count"></span>
         <span id="try-wpm"></span>
@@ -207,7 +218,7 @@
       <div id="new-badges-list" class="badge-list"></div>
     </section>
 
-    <p id="countdown-line" class="countdown">Next word in <b id="countdown"></b></p>
+    <p id="countdown-line" class="countdown">Next Daily in <b id="countdown"></b></p>
   </dialog>
 
   <!-- Badges: unlocked + locked -->

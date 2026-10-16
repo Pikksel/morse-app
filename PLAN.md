@@ -8,7 +8,7 @@
 > **New Claude chat?** Say: *"Read Morse-web/PLAN.md and continue."*
 
 ## ▶ Where we left off (2026-10-15)
-Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–013 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
+Live: https://pikksel.github.io/morse-app/ (GitHub Pages, repo Pikksel/morse-app). DB: Supabase, migrations 001–015 applied (Claude applies them via the Supabase connection; 011 = pg_cron debug job, not in schema.sql).
 Built: Daily (25 tries, 35→10 WPM), Turbo mode (#turbo, server-checked, half-heart fast bonus), callsign + Morse-password login, leaderboards (Daily / Turbo separate), 14 badges + badges page, title screen (Morse ring, ripples, shimmer, floating dits/dahs, parallax, shark easter egg, fun facts), calm background when not playing, pause timer when page hidden.
 **New 2026-10-15: 🐣 Easy mode + 🎀 cute Morse sound (step 4.21)**, built and tested locally, not pushed yet. The user should test it on the phone (a real game in Easy Daily + Easy Turbo, 🎀 sound on/off).
 Open:
@@ -324,6 +324,24 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] 🎀 Cute Morse (`js/cuteMorse.js`): header toggle in both modes, default off, Web Audio scheduling (timing checked: exact), each symbol cuts the previous one, silent-mode routing
 - [x] Easy sounds: `cute-win.mp3` replaces win (Daily solved + Turbo personal best), `enter-tap-cute.mp3` replaces the title-screen tap (swap lives in sfx.js `EASY_SOUNDS`)
 - [ ] User: test on phone (real Easy game, 🎀 on/off, Exit), then push
+
+### 4.22 No spoilers + Normal = random letters (2026-10-16)
+- [x] Finished Daily: the answer shows right after finishing; once the page is hidden (phone locked, app switched) or reloaded (⟵ Exit) the squares turn grey (Easy: cute grey) with a soft SOLVED / DONE over them, the guess history is hidden, and the results popup says "🔒 Answer hidden" (`isConcealed` in gameView.js)
+- [x] Normal Daily: 5 random letters per day (seeded by the date, same for everyone) from **2026-10-17**; earlier days keep their word. Easy stays real words (`dailyWord` in game.js)
+- [ ] User: check on phone after tomorrow's word (00:00 UTC)
+
+### 4.23 Weekends (2026-10-16)
+- [x] Normal Daily is Monday–Friday (UTC). Saturday/Sunday: 🌙 weekend card with countdown to Monday + ⚡ Play Turbo / 🐣 Try Easy. Easy + Turbo open every day
+- [x] DB migration 014: `submit_score` refuses Normal scores on weekends (`WEEKEND`); `_workday()` numbers weekdays so Friday → Monday is "in a row"
+- [x] Streak badges (weekdays only): 🕯️ 3, 🔥 5, ☄️ 10, 🌋 15 (streak_30 removed, nobody had it). 👑 Week Champion + 🏠 Time to Go Home use weekdays too. 🐢 Slow & Steady (Easy) counts every day
+- [x] Weekend leaderboard "Today" shows Friday; "Next Daily in" countdown skips the weekend
+- 5 players already qualify for Streak 3 (DAW1, RM1, SHYT, SNOM, USSR): awarded with the popup at their next game
+- ⚠️ Push before Saturday 00:00 Swedish time, else the live (old) site lets Normal players play on Saturday and the score is refused
+
+### 4.24 Day = Swedish time (2026-10-16)
+- [x] A new Daily starts at **00:00 Swedish time** (Europe/Stockholm, summer/winter time automatic) instead of 00:00 UTC. Weekends, "Next Daily in" countdowns and the Turbo "today" leaderboard follow it too
+- [x] DB migration 015: `_today()`; used by `submit_score`, `_badges_earned`, `get_turbo_leaderboard`. Client: `todayKey()` / `nextDailyAt()` in game.js (Intl, DST edges tested)
+- ⚠️ Push soon: until then the live site still changes day at 00:00 UTC (02:00 in Sweden) and scores sent between 00:00 and 02:00 Swedish time get WRONG_DAY
 
 Original proposal (kept for reference):
 **Choosing the mode**
