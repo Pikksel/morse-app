@@ -563,6 +563,8 @@ button.link {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 6px;
   border-radius: 50%;
   border: 3px solid var(--accent);
   background: color-mix(in srgb, var(--surface) 80%, transparent);
@@ -581,6 +583,12 @@ button.link {
 .turbo-orb.wrong { border-color: var(--error); background: color-mix(in srgb, var(--error) 30%, var(--surface)); animation: shake 0.35s; }
 .turbo-orb.right span, .turbo-orb.wrong span { font-size: clamp(3rem, 18vw, 4.6rem); }
 @keyframes orb-pulse { 50% { transform: scale(1.06); box-shadow: 0 0 40px var(--accent); } }
+/* 🐣 Easy: the letter's Morse under the ♪ */
+.turbo-morse { display: flex; gap: 4px; align-items: center; color: var(--text); }
+.turbo-morse:empty { display: none; }
+.turbo-morse i { display: block; height: 9px; border-radius: 999px; background: currentColor; }
+.turbo-morse .dit { width: 9px; }
+.turbo-morse .dah { width: 20px; }
 
 .turbo-timer {
   height: 8px;
@@ -1179,6 +1187,7 @@ button.exit-btn {
 @media (max-width: 400px) { .exit-label { display: none; } } /* small phones: the arrow is enough */
 
 .cute-toggle[aria-pressed="false"] { filter: grayscale(1); opacity: 0.45; }
+.cute-toggle:disabled { opacity: 0.25; cursor: not-allowed; }
 .cute-toggle[aria-pressed="true"] { animation: cute-wiggle 0.5s ease; }
 @keyframes cute-wiggle { 30% { transform: rotate(-14deg) scale(1.2); } 65% { transform: rotate(10deg); } }
 

@@ -1,16 +1,21 @@
 // Turbo mode: one letter plays once, pick it from three (🐣 Easy: two), three lives, faster and faster.
 // The database picks the letters, checks the answers and keeps the score (see turbo_* in schema.sql);
 // this file only plays, shows and sends taps.
-import { turboStart, turboAnswer, getTurboBest, awardBadges } from './api.js';
+import * as server from './api.js';
+import * as demo from './demo.js';
 import { BADGES } from './badges.js';
 import { revealSequence } from './badgeReveal.js';
-import { play, stop } from './morse.js';
+import { MORSE, play, stop } from './morse.js';
 import { playSfx, blip, prepareRandom, playRandom } from './sfx.js';
 import { confetti } from './confetti.js';
 import { loadPlayer } from './player.js';
 import { isEasy } from './mode.js';
 
 const $ = (id) => document.getElementById(id);
+
+// 🧪 …/?demo on localhost: fake server, no login (see demo.js).
+const api = demo.isDemo() ? demo : server;
+const me = () => (demo.isDemo() ? demo.DEMO_PLAYER : loadPlayer());
 
 // Time to answer, starting when the letter has finished playing. 🐣 Easy: 10 s (the server uses the same).
 const answerMs = () => (isEasy() ? 10000 : 5000);
@@ -76,9 +81,13 @@ function paintStatus() {
   $('turbo-wpm').textContent = current ? `${current.wpm} WPM` : '';
 }
 
-function orb(text, state = '') {
+// 🐣 Easy: the letter's Morse is also written under the ♪ (round dot = dit, pill = dah).
+const morseShapes = (letter) => [...MORSE[letter]].map((s) => `<i class="${s === '.' ? 'dit' : 'dah'}"></i>`).join('');
+
+function orb(text, state = '', letter = null) {
   $('turbo-orb-text').textContent = text;
   $('turbo-orb').className = `turbo-orb ${state}`;
+  $('turbo-orb-morse').innerHTML = isEasy() && letter ? morseShapes(letter) : '';
 }
 
 function message(text) {
@@ -148,11 +157,11 @@ function ask(next) {
   setOptionsEnabled(true);
   resetTimer();
   showTimer(true);
-  orb('♪', 'listening');
+  orb('♪', 'listening', next.letter);
   message('');
   play(next.letter, next.wpm, () => {
     if (current !== next || answering) return; // already answered while it played
-    orb('?', 'waiting');
+    orb('?', 'waiting', next.letter);
     startTimer();
   });
 }
@@ -165,11 +174,11 @@ async function answer(choice) {
   setOptionsEnabled(false);
   const tapped = [...$('turbo-options').children].find((b) => b.dataset.letter === choice);
 
-  const player = loadPlayer();
+  const player = me();
   const thisRun = run;
   let res;
   try {
-    res = await turboAnswer(player.name, player.token, run.id, choice);
+    res = await api.turboAnswer(player.name, player.token, run.id, choice);
   } catch (err) {
     if (run !== thisRun) return;
     message(`Connection problem (${err.message}). Your score so far is saved.`);
@@ -183,7 +192,7 @@ async function answer(choice) {
   }
   if (res.correct) {
     blip('correct');
-    orb(res.answer, 'right');
+    orb(res.answer, 'right', res.answer);
     if (res.bonus) {
       message(res.capped ? '⚡ Fast streak! (max hearts)' : '⚡ Fast streak! +½ ❤️');
       justGained = !res.capped;
@@ -191,7 +200,7 @@ async function answer(choice) {
   } else {
     blip('wrong');
     tapped?.classList.add('wrong');
-    orb(res.answer, 'wrong');
+    orb(res.answer, 'wrong', res.answer);
     message(choice === null || res.late ? `Too slow: it was ${res.answer}` : `It was ${res.answer}`);
     $('turbo-lives').classList.remove('hit');
     void $('turbo-lives').offsetWidth;
@@ -210,7 +219,7 @@ async function answer(choice) {
 }
 
 async function startRun() {
-  const player = loadPlayer();
+  const player = me();
   if (!player) return;
   cancelReveal(); // badges from the last game over still waiting
   newSessionLook();
@@ -220,8 +229,8 @@ async function startRun() {
   message('');
   orb('…', 'waiting');
   try {
-    prevBest = (await getTurboBest(player.name))?.alltime ?? 0;
-    const start = await turboStart(player.name, player.token);
+    prevBest = (await api.getTurboBest(player.name))?.alltime ?? 0;
+    const start = await api.turboStart(player.name, player.token);
     run = { id: start.run_id, score: start.score, halves: start.halves ?? START_HALVES, streak: 0 };
     notifyState();
     ask(start.next);
@@ -258,7 +267,7 @@ async function gameOver(score) {
   showNewBadges();
   $('turbo-best').textContent = 'Loading your best…';
   try {
-    const best = await getTurboBest(loadPlayer().name);
+    const best = await api.getTurboBest(me().name);
     $('turbo-best').textContent =
       `Best today: ${best.today ?? 0} (#${best.today_rank ?? '–'}) · All-time: ${best.alltime ?? 0} (#${best.alltime_rank ?? '–'})`;
   } catch {
@@ -273,9 +282,9 @@ async function showNewBadges() {
   const box = $('turbo-badges');
   box.hidden = true;
   box.innerHTML = '';
-  const player = loadPlayer();
+  const player = me();
   let ids = [];
-  try { ids = (await awardBadges(player.name, player.token)).filter((id) => BADGES[id]); } catch { return; }
+  try { ids = (await api.awardBadges(player.name, player.token)).filter((id) => BADGES[id]); } catch { return; }
   if (!ids.length || run) return; // nothing new, or a new run already started
   box.hidden = false;
   setTimeout(() => {

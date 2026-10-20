@@ -148,12 +148,16 @@ function paintHistory() {
 // Morse as shapes: round dot for a dit, pill for a dah (same look as the keyboard).
 const morseShapes = (letter) => [...MORSE[letter]].map((s) => `<i class="${s === '.' ? 'dit' : 'dah'}"></i>`).join('');
 
-// 🐣 Easy hint: the word's Morse under the squares, letter by letter.
+// 🐣 Easy hint: one letter's Morse, under its square — the first letter
+// still missing after the first 5 tries (so it doesn't move later).
 function paintHint() {
   const box = $('morse-hint');
   box.hidden = !showsHint(state);
   if (box.hidden) return;
-  box.innerHTML = [...dailyWord(state.day)].map((c) => `<span>${morseShapes(c)}</span>`).join('');
+  const answer = dailyWord(state.day);
+  const early = state.guesses.slice(0, HINT_AFTER);
+  const pick = [...answer].findIndex((c, i) => !early.some((g) => g.word[i] === c));
+  box.innerHTML = [...answer].map((c, i) => `<span>${i === pick ? morseShapes(c) : ''}</span>`).join('');
 }
 
 function paintKeyboard() {
@@ -322,7 +326,7 @@ function submit() {
   paintSquares(true);
 
   const correct = result.filter(Boolean).length;
-  if (showsHint(state) && state.tries === HINT_AFTER) message('🐣 Hint unlocked: the word in Morse is under the squares!');
+  if (showsHint(state) && state.tries === HINT_AFTER) message('🐣 Hint unlocked: one letter in Morse is under the squares!');
   else message(`${correct}/${WORD_LENGTH} correct. Play to listen, or edit and Guess (try ${state.tries + 1}).`);
 }
 

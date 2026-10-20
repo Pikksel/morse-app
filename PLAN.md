@@ -348,6 +348,14 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] First time a player enters the game: welcome card under the header (title, short pitch, what the icons do, "👥 X players have joined", customer-service joke, "Got it!"). Once per device; Normal and 🐣 Easy each have their own text (`js/welcome.js`, localStorage `morse-web:welcome:<mode>`)
 - [x] DB migration 017: `get_player_count()` (a number only)
 
+### 4.27 Easy hint = one letter (2026-10-20)
+- [x] Easy hint after 5 tries shows the Morse of **one** letter (was the whole word): the first letter still missing after the first 5 tries, under its square, fixed for the rest of the game (`paintHint` in gameView.js)
+- [x] Easy Turbo: the letter's Morse (dots/pills) is written in the orb under the ♪ while it plays, under the ? while waiting, and under the answer letter after (`orb()` in turbo.js, `.turbo-morse`)
+- [x] 🧪 Demo Turbo for local testing: `http://localhost:5174/?demo` (localhost only) goes straight to Turbo with a fake server: no login, nothing saved (`js/demo.js`). Local server: `.claude/launch.json` (`python -m http.server`)
+- [x] Daily square highlight follows the **audio clock** instead of one setTimeout per letter (`js/audioClock.js`, used by morse.js + cuteMorse.js). Fixes the highlight running ahead when the audio was waking up, and skipped squares. Measured at 20 WPM: letter gaps within 10 ms of the Morse timing, both sounds
+- [x] 🎵 Cute sound toggle is locked (faded, not clickable) while a word (Daily) or letter (Turbo) is playing: morse.js sends `morse:sound` on play start/finish/stop, ui.js disables the button
+- [ ] User: test an Easy game + Easy Turbo + Daily highlight + 🎵 lock on phone, then push
+
 ### 4.24 Day = Swedish time (2026-10-16)
 - [x] A new Daily starts at **00:00 Swedish time** (Europe/Stockholm, summer/winter time automatic) instead of 00:00 UTC. Weekends, "Next Daily in" countdowns and the Turbo "today" leaderboard follow it too
 - [x] DB migration 015: `_today()`; used by `submit_score`, `_badges_earned`, `get_turbo_leaderboard`. Client: `todayKey()` / `nextDailyAt()` in game.js (Intl, DST edges tested)

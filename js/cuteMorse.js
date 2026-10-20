@@ -1,6 +1,8 @@
 // 🎀 Cute Morse: dits and dahs played from two MP3 files instead of a beep tone.
 // Both files are decoded once into Web Audio buffers, and every symbol is scheduled on the
 // audio clock, so the timing stays exact even at high speed. A new symbol cuts off the previous one.
+import { followAudioClock } from './audioClock.js';
+
 const FILES = { '.': 'sounds/cute-ding.mp3', '-': 'sounds/cute-dash.mp3' };
 const VOLUME = 0.8;
 const CUT_S = 0.012; // quick fade when the next symbol cuts a sound off (no click)
@@ -12,7 +14,6 @@ let buffers = null;
 let loading = null;
 let playId = 0;
 let sources = [];     // scheduled sounds of the current play
-let timers = [];
 
 function setup() {
   if (ctx) return;
@@ -60,8 +61,6 @@ export function primeCute() {
 
 export function stopCute() {
   playId++;
-  timers.forEach(clearTimeout);
-  timers = [];
   for (const s of sources) try { s.stop(); } catch {}
   sources = [];
 }
@@ -78,14 +77,13 @@ export async function playCute(codes, wpm, lead, onDone, onLetter) {
   if (!buffers) return onDone?.();       // files missing: skip silently
 
   const unit = 1.2 / wpm;                 // seconds per Morse unit (PARIS standard)
-  const now = ctx.currentTime;
-  const at = (t) => Math.max(0, (t - now) * 1000); // audio time → setTimeout delay
-  let t = now + lead;
+  let t = ctx.currentTime + lead;
   let prev = null;
+  const letters = []; // { n, at }: when each character starts, on the audio clock
 
   codes.forEach((code, i) => {
     if (code === null) { t += 4 * unit; return; } // word gap: 7 units (3 already added)
-    timers.push(setTimeout(() => { if (id === playId) onLetter?.(i); }, at(t)));
+    letters.push({ n: i, at: t });
     for (const symbol of code) {
       if (prev) cut(prev, t);
       prev = sound(symbol, t);
@@ -95,7 +93,7 @@ export async function playCute(codes, wpm, lead, onDone, onLetter) {
   });
 
   const end = t - 3 * unit;
-  timers.push(setTimeout(() => { if (id === playId) onDone?.(); }, at(end) + 30));
+  followAudioClock(ctx, letters, end, id, () => playId, onLetter, onDone);
 }
 
 function sound(symbol, t) {

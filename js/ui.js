@@ -10,6 +10,7 @@ import { enterTurbo, leaveTurbo, isTurboRunning } from './turbo.js';
 import { setAmbient } from './ambient.js';
 import { runSplash } from './splash.js';
 import { maybeShowWelcome, hideWelcome } from './welcome.js';
+import { isDemo, DEMO_PLAYER } from './demo.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -296,6 +297,8 @@ $('cute-toggle').addEventListener('click', () => {
   if (isCute()) tone('E', 15);
 });
 paintCute();
+// Locked while a word (Daily) or letter (Turbo) is playing.
+document.addEventListener('morse:sound', (e) => { $('cute-toggle').disabled = e.detail; });
 
 $('sign-out').addEventListener('click', () => {
   if (!confirm('Log out? Log back in with your callsign and Morse password.')) return;
@@ -332,6 +335,11 @@ runSplash().then(enterApp);
 
 function enterApp() {
   $('splash').hidden = true;
+  // 🧪 …/?demo on localhost: straight to Turbo, no login (see demo.js).
+  if (isDemo()) {
+    $('player-name').textContent = DEMO_PLAYER.name;
+    return openTurbo({ enter: true });
+  }
   const player = loadPlayer();
   if (!player?.name || !player?.token) return show('start', { enter: true });
 
