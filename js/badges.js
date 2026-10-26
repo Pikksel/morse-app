@@ -26,7 +26,9 @@ export const BADGES = {
   easy_bright_idea: { mode: 'easy', icon: '💡', name: 'Bright Idea',   desc: 'Solved the word after the hint appeared' },
   easy_slow_steady: { mode: 'easy', icon: '🐢', name: 'Slow & Steady', desc: 'Played Easy 3 days in a row' },
   easy_little_star: { mode: 'easy', icon: '⭐', name: 'Little Star',   desc: '10 points in one Easy Turbo run' },
+  // 🎃 Seasonal: shown on both badge pages (Normal and Easy)
+  spooky_connection: { mode: 'all', icon: '🎃', name: 'Spooky Connection', desc: 'Played during Halloween week (27–31 Oct 2026)' },
 };
 
 // Badges of the current mode (the 🏅 page shows only these).
-export const badgeIdsFor = (mode) => Object.keys(BADGES).filter((id) => (BADGES[id].mode ?? 'normal') === mode);
+export const badgeIdsFor = (mode) => Object.keys(BADGES).filter((id) => [mode, 'all'].includes(BADGES[id].mode ?? 'normal'));

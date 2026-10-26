@@ -6,6 +6,7 @@ import { BADGES } from './badges.js';
 import { revealSequence } from './badgeReveal.js';
 import { isEasy } from './mode.js';
 import { isConcealed } from './gameView.js';
+import { getSeason } from './season.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,6 +19,9 @@ let shownState = null;  // the game whose summary is showing
 
 // ---------- Summary ----------
 
+// 🎃 Seasonal titles for the results popup (Daily).
+const SEASON_TITLES = { halloween: { won: 'You survived the night! 🎃', lost: 'The night got you… 👻' } };
+
 function paintSummary(state) {
   shownState = state;
   const finished = state && state.status !== 'playing';
@@ -26,7 +30,8 @@ function paintSummary(state) {
   if (!finished) return;
 
   const answer = dailyWord(state.day);
-  $('results-title').textContent = state.status === 'won' ? 'Solved!' : 'Out of tries';
+  const titles = SEASON_TITLES[getSeason()] ?? { won: 'Solved!', lost: 'Out of tries' };
+  $('results-title').textContent = state.status === 'won' ? titles.won : titles.lost;
   // No spoilers once the page has been left (see isConcealed in gameView.js)
   const hide = isConcealed();
   $('result-word').classList.toggle('concealed', hide);

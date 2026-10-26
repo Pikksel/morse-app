@@ -10,6 +10,7 @@ import { playSfx, blip, prepareRandom, playRandom } from './sfx.js';
 import { confetti } from './confetti.js';
 import { loadPlayer } from './player.js';
 import { isEasy } from './mode.js';
+import { enterLair, setSpider, leaveLair } from './turboLair.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -237,8 +238,7 @@ async function startRun() {
   } catch (err) {
     message(err.message === 'BAD_TOKEN' ? 'Your login has expired. Log out and in again.' : `Couldn't start: ${err.message}`);
     $('turbo-intro').hidden = false;
-    orb('TURBO');
-  }
+    orb('TURBO');  }
 }
 
 async function gameOver(score) {
@@ -247,8 +247,7 @@ async function gameOver(score) {
   resetTimer();
   showTimer(false);
   run = null;
-  current = null;
-  notifyState();
+  current = null;  notifyState();
   $('turbo-options').hidden = true;
   $('turbo-final-score').textContent = score;
 
@@ -311,6 +310,8 @@ export function enterTurbo({ onOpenLeaderboard } = {}) {
   if (onOpenLeaderboard) onLeaderboard = onOpenLeaderboard;
   $('turbo-intro-text').innerHTML = INTRO[isEasy() ? 'easy' : 'normal'];
   newSessionLook();
+  enterLair();      // 🕷️ Halloween: cobwebs, fog, spider
+  setSpider(true);
   paintStatus();
   showTimer(false);
   orb('TURBO');
@@ -329,6 +330,7 @@ export function leaveTurbo() {
   current = null;
   answering = false;
   cancelReveal();
+  leaveLair();
   notifyState();
   document.body.classList.remove('turbo-mode');
 }

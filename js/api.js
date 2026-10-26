@@ -79,3 +79,11 @@ export const getTurboLeaderboard = (scope = 'today') =>
 // { today, today_rank, alltime, alltime_rank } (null when no runs).
 export const getTurboBest = (name) =>
   rpc('get_turbo_best', { p_name: name, p_mode: p_mode() });
+
+// 💡 Suggestion box: max 500 characters, 3 per day (checked by the database).
+export const submitSuggestion = (name, token, body) =>
+  rpc('submit_suggestion', { p_name: name, p_token: token, p_body: body, p_mode: p_mode() });
+
+// Admins only (DAW1): all suggestions, newest first. Others get NOT_ALLOWED.
+export const getSuggestions = (name, token) =>
+  rpc('get_suggestions', { p_name: name, p_token: token });

@@ -1,5 +1,6 @@
 // UI sound effects (files in /sounds). Preloaded so they start without delay.
 import { isEasy } from './mode.js';
+import { getSeason } from './season.js';
 
 const sounds = {
   win: new Audio('sounds/win.mp3'),
@@ -18,6 +19,31 @@ for (const [name, audio] of Object.entries(sounds)) {
   audio.volume = VOLUME[name] ?? 0.7;
 }
 
+// 🎃 Seasonal versions of sounds (js/season.js). Loaded only during that season.
+const SEASON_SOUNDS = {
+  halloween: { enter: 'sounds/halloween-enter.mp3', win: 'sounds/halloween-win.mp3', fail: 'sounds/halloween-fail.mp3', evilLaugh: 'sounds/evil-laughter.mp3', witchGiggle: 'sounds/halloween-witch-giggle.mp3',
+               ghost: 'sounds/halloween-ghost.mp3', thunder: ['sounds/halloween-thunder.mp3', 'sounds/halloween-thunder2.mp3'],
+               wolf: 'sounds/halloween-wolf.mp3' },
+};
+// A list of files = variations: a random one each time, never the same twice in a row.
+const loadSeason = (file) => {
+  const audio = new Audio(file);
+  audio.preload = 'auto';
+  audio.volume = 0.7;
+  return audio;
+};
+const seasonSounds = Object.fromEntries(Object.entries(SEASON_SOUNDS[getSeason()] ?? {}).map(([name, file]) =>
+  [name, Array.isArray(file) ? file.map(loadSeason) : loadSeason(file)]));
+const lastSeasonPick = {};
+function seasonAudio(name) {
+  const s = seasonSounds[name];
+  if (!Array.isArray(s)) return s;
+  const options = s.filter((a) => a !== lastSeasonPick[name] && !a.error);
+  const pick = options[Math.floor(Math.random() * options.length)] ?? s[0];
+  lastSeasonPick[name] = pick;
+  return pick;
+}
+
 // 🐣 Easy mode plays its own version of these sounds.
 const EASY_SOUNDS = { win: 'cuteWin', tap: 'tapCute' };
 const forMode = (name) => (isEasy() && EASY_SOUNDS[name]) || name;
@@ -27,13 +53,15 @@ const forMode = (name) => (isEasy() && EASY_SOUNDS[name]) || name;
 const PLAYER_SOUNDS = {
   USSR: { enter: 'sounds/USSR.mp3' },
   RM1: { enter: 'sounds/RM1.mp3' },
+  HUEE: { enter: 'sounds/HUEE.mp3' },
+  TAGG: { enter: 'sounds/TAGG.mp3' },
 };
 
 // Loaded only when that player actually plays it, so nobody else downloads VIP files.
 const playerAudio = {};
 function audioFor(name, callsign) {
   const file = PLAYER_SOUNDS[callsign]?.[name];
-  if (!file) return sounds[name];
+  if (!file) return seasonAudio(name) ?? sounds[name]; // VIP sound first, then the season's, then the normal one
   if (!playerAudio[file]) {
     playerAudio[file] = new Audio(file);
     playerAudio[file].volume = 0.7;
@@ -43,7 +71,7 @@ function audioFor(name, callsign) {
 
 // callsign (optional): the logged-in player, for VIP sounds.
 export function playSfx(name, callsign) {
-  const audio = audioFor(forMode(name), callsign);
+  const audio = audioFor(seasonSounds[name] ? name : forMode(name), callsign);
   if (!audio) return;
   audio.currentTime = 0;
   audio.play().catch(() => {}); // blocked autoplay or missing file: stay silent
@@ -81,12 +109,19 @@ const RANDOM_SOUNDS = {
     'sounds/turbo-fail5.mp3', 'sounds/turbo-fail6.mp3', 'sounds/turbo-fail7.mp3', 'sounds/turbo-fail8.mp3',
   ],
 };
+// 🎃 Seasonal sets of random sounds: used instead of RANDOM_SOUNDS during that season.
+const SEASON_RANDOM = {
+  halloween: {
+    turboFail: ['sounds/halloween-turbo-fail1.mp3', 'sounds/halloween-turbo-fail2.mp3',
+                'sounds/halloween-turbo-fail3.mp3', 'sounds/halloween-turbo-fail4.mp3'],
+  },
+};
 const lastPick = {};
 const prepared = {};
 
 // Picks the next random version and starts loading it, so it plays instantly later.
 export function prepareRandom(name) {
-  const files = RANDOM_SOUNDS[name];
+  const files = SEASON_RANDOM[getSeason()]?.[name] ?? RANDOM_SOUNDS[name];
   if (!files) return;
   const options = files.length > 1 ? files.filter((f) => f !== lastPick[name]) : files;
   const file = options[Math.floor(Math.random() * options.length)];
@@ -138,3 +173,38 @@ export function playPitched(name) {
   audio.currentTime = 0;
   audio.play().catch(() => {});
 }
+
+// 🎃 Title screen theme song (only during a season that has one). Loops quietly;
+// browsers only allow it after a tap, so the title screen starts it on the first tap.
+const THEME_SONGS = { halloween: 'sounds/halloween-play.mp3' };
+const THEME_VOLUME = 0.4;
+let theme = null;
+
+export function startThemeSong() {
+  const file = THEME_SONGS[getSeason()];
+  if (!file || theme) return;
+  theme = new Audio(file);
+  theme.loop = true;
+  theme.volume = THEME_VOLUME;
+  theme.play().catch(() => { theme = null; }); // blocked: the next tap tries again
+}
+
+// Fades out over ms, then stops for good. (iPhones ignore volume: there it just stops after ms.)
+export function stopThemeSong(ms = 600) {
+  const audio = theme;
+  theme = null;
+  if (!audio) return;
+  const start = performance.now();
+  const id = setInterval(() => {
+    const k = Math.min(1, (performance.now() - start) / ms);
+    audio.volume = THEME_VOLUME * (1 - k);
+    if (k === 1) { clearInterval(id); audio.pause(); }
+  }, 30);
+}
+
+// Phone locked / app switched: pause the song, and carry on when back.
+document.addEventListener('visibilitychange', () => {
+  if (!theme) return;
+  if (document.hidden) theme.pause();
+  else theme.play().catch(() => {});
+});

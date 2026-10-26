@@ -1,5 +1,8 @@
 // Small canvas confetti burst. No library: pieces get a speed, then gravity and drag pull them down.
+import { getSeason } from './season.js';
+
 const COLORS = ['#4a9d5b', '#f0a04b', '#e9e6df', '#c9a227', '#5aa9e6', '#e05d5d'];
+const SEASON_COLORS = { halloween: ['#ff7a1a', '#9b5de5', '#6fbf3f', '#f1e9ff', '#ffb35c', '#3a2c4d'] }; // 🎃 candy
 const GRAVITY = 0.35;
 const DRAG = 0.985;
 
@@ -31,7 +34,7 @@ export function confetti({ origin, count = 160, duration = 3200 } = {}) {
       h: 9 + Math.random() * 8,
       rot: Math.random() * Math.PI,
       spin: (Math.random() - 0.5) * 0.4,
-      color: COLORS[i % COLORS.length],
+      color: (SEASON_COLORS[getSeason()] ?? COLORS)[i % (SEASON_COLORS[getSeason()] ?? COLORS).length],
     };
   });
 

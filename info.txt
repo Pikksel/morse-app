@@ -1,0 +1,5 @@
+python -m http.server 5500
+
+new
+
+python serve.py

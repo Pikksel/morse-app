@@ -58,8 +58,28 @@ function randomLetters(dayNumber) {
   return Array.from({ length: WORD_LENGTH }, () => String.fromCharCode(65 + Math.floor(next() * 26))).join('');
 }
 
+// 🎃 Special Daily words on these days, per mode: Normal instead of random letters, Easy instead of its list.
+const SPECIAL_WORDS = {
+  normal: {
+    '2026-10-27': 'GHOST',
+    '2026-10-28': 'WITCH',
+    '2026-10-29': 'SKULL',
+    '2026-10-30': 'CRYPT',
+  },
+  easy: { // "trick or treat" week, weekend included (Easy is open every day)
+    '2026-10-27': 'CANDY',
+    '2026-10-28': 'BROOM',
+    '2026-10-29': 'MAGIC',
+    '2026-10-30': 'SPELL',
+    '2026-10-31': 'TRICK',
+    '2026-11-01': 'TREAT',
+  },
+};
+
 export function dailyWord(dayKey = todayKey(), mode = getMode()) {
   const days = Math.floor((Date.parse(dayKey) - EPOCH) / DAY_MS);
+  const special = SPECIAL_WORDS[mode === 'easy' ? 'easy' : 'normal'][dayKey];
+  if (special) return special;
   if (mode !== 'easy' && dayKey >= RANDOM_FROM) return randomLetters(days);
   // Words: Easy uses the same list half a list further on, so it never matches an old Normal day.
   const dayNumber = days + (mode === 'easy' ? Math.floor(ANSWERS.length / 2) : 0);

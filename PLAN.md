@@ -356,6 +356,36 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] 🎵 Cute sound toggle is locked (faded, not clickable) while a word (Daily) or letter (Turbo) is playing: morse.js sends `morse:sound` on play start/finish/stop, ui.js disables the button
 - [ ] User: test an Easy game + Easy Turbo + Daily highlight + 🎵 lock on phone, then push
 
+### 4.28 💡 Suggestion box (2026-10-26)
+- [x] DB migration 018 (applied + in schema.sql): `suggestions` table, `players.is_admin` (only DAW1), `submit_suggestion` (logged in, 1–500 chars, max 3 per player per Swedish day), `get_suggestions` (admins only, else NOT_ALLOWED). Tested in a rolled-back transaction (send ×3, 4th TOO_MANY, too long/blank BAD_LENGTH, BAD_TOKEN, non-admin NOT_ALLOWED, DAW1 gets the list); advisors: only the known by-design findings
+- [x] "💡 Send a suggestion" link at the bottom of the results popup → dialog with text box, 0/500 counter, Send, "Thanks! 🙏" (`js/suggest.js`)
+- [x] Admin page `…/sugg/` (live: https://pikksel.github.io/morse-app/sugg/): log in as DAW1 in the game first, same browser. Others see "Nothing to see here 🙂". Player text shown with textContent (no HTML runs) (`sugg/index.html`, `js/suggList.js`)
+- [ ] User: send a real suggestion as DAW1, check it on `/sugg/`, then commit + push
+
+### 4.29 🎃 Seasons + Halloween theme (2026-10-26)
+- [x] **Premiere tonight: 26 Oct 21:15 Swedish time** (`startsAt` in season.js; season now 10-26 – 11-01). Before it the title screen shows "🎃 The Halloween edition opens in 01:00:00" above PLAY; at zero, players on the title screen reload into Halloween (players mid-game get it next time). Tested with a 1-minute premiere. ⚠️ User must push before 21:15. Spooky Connection badge = played anything on **27–31 Oct** (migration 021 replaces 020's premiere-night rule; applied + schema.sql + tested: 26 Oct night and 1 Nov don't count)
+Plan: Halloween Oct 27 – Nov 1 (Swedish days), level B + scary sounds, always dark, Easy keeps its shapes/font. No animations or extra sounds while playing. Christmas later reuses the seasons system (+ the forest, with snow).
+- [x] Step 1: `js/season.js` (date list, sets `body[data-season]`, `?season=halloween` / `?season=none` for testing) + night palette at the end of style.css. Tested: title, Turbo, popups, Easy, light system mode stays dark; today (Oct 26) and `?season=none` unchanged
+- [x] Step 2: title screen pine forest + moon + stars + bats (all SVG, `js/seasonScene.js`, only during the season; bats stop on PLAY, none with reduced motion), embers instead of dits/dahs, pumpkin Turbo orb, Turbo hues only purple/pumpkin/green (option A), candy confetti. Bats got a moonlit orange edge (pure dark was invisible on the night sky)
+- [x] Step 3: sounds (sfx.js `SEASON_SOUNDS` / `SEASON_RANDOM` / `THEME_SONGS`): `halloween-enter.mp3` (PLAY; VIPs keep theirs), `halloween-win.mp3` (Easy too), `halloween-fail.mp3` (Daily), random `halloween-turbo-fail1–4.mp3` (Turbo game over), theme song `halloween-play.mp3` (loops at 0.4 on the title screen from the first tap, pauses when the page is hidden, fades out over 0.6 s on PLAY; iPhone just stops). Tested which file plays in each case + normal day unchanged
+- [x] VIP PLAY sounds for HUEE + TAGG (`sounds/HUEE.mp3`, `sounds/TAGG.mp3`); VIPs keep theirs during Halloween
+- [x] 🎃 Welcome box above PLAY: "🎃 🦇 🎃 Welcome to the Halloween edition! Do you dare to enter?" Yes = closes (ring glides up) + starts the theme song, remembered for the visit (sessionStorage); No = `evil-laughter.mp3` + shake, box stays. Taps on it make no ripples (`seasonWelcome()` in splash.js)
+- [x] User: add `sounds/evil-laughter.mp3` (5.4 s; tested: plays on No)
+- [x] 🧙 Witch (`graphics/witch.svg`, user's file) flies left → right at moon height on the title screen **when the player taps the screen** (not PLAY / Easy-Normal / welcome box), one at a time (`summonWitch()`), 14 s per crossing, gentle bob, moonlit edge. In front of the moon, behind bats/trees; none with reduced motion; stops with the bats on PLAY (`witch()` in seasonScene.js). Giggles (`halloween-witch-giggle.mp3`) 0.7 s after each start, as she comes into view (silent until the first tap: browser rule)
+- [x] 🕷️ Halloween Turbo "spider's lair" (Easy + Normal, `js/turboLair.js`): fixed dark background with red/purple glow from below (replaces the option A hues; turbo.js back to its original random hue), cobwebs in both top corners, fog, tombstone answer buttons, blood-red timer bar (darker when low). Spider drops on its thread at the sides, swings, climbs back up, then 7 s out of sight (17 s cycle); **also during a run** (user's choice: not distracting). Removed when leaving Turbo; none with reduced motion
+- [x] 🎃 Halloween extras (2026-10-26):
+  - 👻 Ghost instead of the shark (easter egg now 8 taps, also for the shark); sound `halloween-ghost.mp3`
+  - Result titles: "You survived the night! 🎃" / "The night got you… 👻" (results.js `SEASON_TITLES`)
+  - 6 spooky Morse facts shown first in the fact card (facts.js `SEASON_FACTS`)
+  - ⚡ Storm on the title screen every 20–40 s: random jagged SVG bolt with a branch (behind the trees) + sky flash, then 0.9 s later thunder (random of `halloween-thunder.mp3` / `-thunder2.mp3`) + the scene rumbles. Title screen only: Turbo keeps its normal wrong-answer buzz (thunder in Turbo was tried and removed)
+  - 🎃 Badge "Spooky Connection" (mode 'all' = both badge pages): played anything 27 Oct – 1 Nov 2026. DB migration 019 (applied, schema.sql updated, tested in a rolled-back transaction, advisors OK)
+  - 🦴 Bone-white Daily keys, 🕯️ flickering PLAY ring
+  - 🐺 Wolf howl (`halloween-wolf.mp3`, 7.9 s) at random on the title screen, 15–30 s apart (`WOLF_MIN_MS` / `WOLF_EXTRA_MS` in seasonScene.js); stops on PLAY
+- [x] User: add `sounds/halloween-thunder.mp3` + `halloween-thunder2.mp3` (7.2 s / 5.5 s): random, never the same twice in a row (a list of files in `SEASON_SOUNDS` = variations). Tested: Turbo wrong answer plays it, cut after ~1.1 s when the next letter starts
+- [ ] User: add `sounds/halloween-ghost.mp3`
+- [x] 🎃 Halloween Normal Daily words instead of random letters: Tue 27 GHOST, Wed 28 WITCH, Thu 29 SKULL, Fri 30 CRYPT (`SPECIAL_WORDS` in game.js). Weekend skipped (no bonus day); random letters again from Mon 2 Nov. Easy "trick or treat" week (Easy is open every day): Tue CANDY, Wed BROOM, Thu MAGIC, Fri SPELL, Sat 31 TRICK, Sun 1 TREAT; its normal list again from Mon 2 Nov (`SPECIAL_WORDS.normal` / `.easy` in game.js)
+- [ ] User: test on phone, then push before Oct 27 (or the theme starts with only step 1)
+
 ### 4.24 Day = Swedish time (2026-10-16)
 - [x] A new Daily starts at **00:00 Swedish time** (Europe/Stockholm, summer/winter time automatic) instead of 00:00 UTC. Weekends, "Next Daily in" countdowns and the Turbo "today" leaderboard follow it too
 - [x] DB migration 015: `_today()`; used by `submit_score`, `_badges_earned`, `get_turbo_leaderboard`. Client: `todayKey()` / `nextDailyAt()` in game.js (Intl, DST edges tested)

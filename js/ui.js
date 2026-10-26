@@ -1,3 +1,4 @@
+import './season.js';
 import { register, login, logout, verifyPlayer, submitScore, awardBadges } from './api.js';
 import { loadPlayer, savePlayer, clearPlayer, NAME_PATTERN, PASSWORD_PATTERN } from './player.js';
 import { initGame, currentState, isDailyInProgress } from './gameView.js';
@@ -11,6 +12,7 @@ import { setAmbient } from './ambient.js';
 import { runSplash } from './splash.js';
 import { maybeShowWelcome, hideWelcome } from './welcome.js';
 import { isDemo, DEMO_PLAYER } from './demo.js';
+import './suggest.js';
 
 const $ = (id) => document.getElementById(id);
 

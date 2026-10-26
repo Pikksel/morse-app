@@ -236,6 +236,19 @@
     </section>
 
     <p id="countdown-line" class="countdown">Next Daily in <b id="countdown"></b></p>
+    <button id="open-suggest" type="button" class="link-btn">💡 Send a suggestion</button>
+  </dialog>
+
+  <!-- 💡 Suggestion box (js/suggest.js) -->
+  <dialog id="suggest" class="dialog" aria-labelledby="suggest-title">
+    <button id="suggest-close" type="button" class="icon-btn dialog-close" aria-label="Close">✕</button>
+    <h2 id="suggest-title">💡 Send a suggestion</h2>
+    <form id="suggest-form" class="suggest-form" novalidate>
+      <textarea id="suggest-text" maxlength="500" rows="5" placeholder="An idea, a bug, anything…"></textarea>
+      <p id="suggest-count" class="hint suggest-count">0/500</p>
+      <button id="suggest-send" type="submit">Send</button>
+      <p id="suggest-status" class="hint" role="status"></p>
+    </form>
   </dialog>
 
   <!-- Badges: unlocked + locked -->

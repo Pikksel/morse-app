@@ -1347,3 +1347,253 @@ body.easy { --concealed: #cbc3d8; }          /* cute grey */
 #welcome-ok { width: 100%; }
 @keyframes welcome-in { from { opacity: 0; transform: translateY(-10px) scale(0.98); } }
 @media (prefers-reduced-motion: reduce) { .welcome { animation: none; } }
+
+/* ---------- 💡 Suggestion box + …/sugg/ page ---------- */
+.link-btn { display: block; margin-inline: auto; background: none; border: 0; color: var(--accent); font: inherit; font-size: 0.9rem; text-decoration: underline; cursor: pointer; }
+.suggest-form { display: grid; gap: 8px; }
+.suggest-form textarea { width: 100%; resize: vertical; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--muted); background: var(--surface); color: var(--text); }
+.suggest-count { text-align: right; }
+.sugg-page { width: min(100%, 640px); margin: 24px auto; }
+.sugg-list { list-style: none; padding: 0; display: grid; gap: 12px; }
+.sugg-list li { padding: 12px; border-radius: 10px; background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.sugg-body { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ---------- 🎃 Halloween (js/season.js): night palette, always dark ---------- */
+
+body[data-season="halloween"] {
+  color-scheme: dark;            /* form fields and scrollbars dark too */
+  --bg: #140f1f;                 /* night purple */
+  --surface: #221a30;            /* dark plum */
+  --text: #f1e9ff;
+  --muted: #a89bbd;
+  --accent: #ff7a1a;             /* pumpkin */
+  --accent-text: #1a1022;
+  --border: #3a2c4d;
+  --error: #e5384f;              /* blood red */
+  --correct: #6fbf3f;            /* slime green */
+  --absent: #2c2238;
+  --key: #4a3a60;
+  --key-text: #ffffff;
+  --splash-a: #1d1430;
+  --splash-b: #07060c;
+  --splash-glow: rgb(255 122 26 / 0.22);
+  --ring-light: #ffd9a8;
+  --ring-shadow: #5a2408;
+  --fact-bg: rgb(0 0 0 / 0.45);
+  --fact-text: #c9bcdc;
+  --concealed: #3b3050;
+  --t-hue: 275;                  /* Turbo background: purple → orange-ish night tones */
+  --t-l1: 14%;
+  --t-l2: 6%;
+  --t-a: 0.16;
+}
+
+/* 🎃 Title screen scenery (js/seasonScene.js): sky, moon, pines, bats. Parallax like the underwater layers. */
+.season-scene { position: absolute; inset: 0; pointer-events: none; }
+.season-scene > div { position: absolute; left: -40px; right: -40px; transition: transform 0.5s ease-out; }
+.season-scene svg { display: block; width: 100%; height: 100%; }
+.sky-layer { top: 0; height: 70%; transform: translate(calc(var(--px, 0) * 3px), calc(var(--py, 0) * 3px)); }
+.stars circle { fill: #f1e9ff; opacity: 0.55; }
+.stars .twinkle { animation: twinkle 3.5s ease-in-out infinite alternate; }
+.moon { position: absolute; top: 9%; right: 16%; width: min(26vw, 130px) !important; height: auto !important; filter: drop-shadow(0 0 30px rgb(255 190 110 / 0.45)); }
+.moon .crater { fill: #e9a25a; opacity: 0.35; }
+.forest { bottom: 0; }
+.forest path { fill: currentColor; }
+.forest.far  { height: 46%; color: #2a1d40; transform: translate(calc(var(--px, 0) * 6px), calc(var(--py, 0) * 4px)); }
+.forest.mid  { height: 36%; color: #160e24; transform: translate(calc(var(--px, 0) * 12px), calc(var(--py, 0) * 7px)); }
+.forest.near { height: 26%; color: #06040a; transform: translate(calc(var(--px, 0) * 20px), calc(var(--py, 0) * 10px)); }
+
+.bats { inset: 0; }
+.bat { position: absolute; left: 0; animation: bat-fly linear forwards; }
+.bat.rtl { animation-name: bat-fly-rtl; }
+.bat.rtl svg { transform: scaleX(-1); }
+.bat svg { height: auto; overflow: visible; }
+.bat path { fill: #1c1229; }
+.bat svg { filter: drop-shadow(0 0 2px rgb(255 170 90 / 0.75)) drop-shadow(0 0 6px rgb(255 122 26 / 0.35)); } /* moonlit edge: visible on the night sky */
+.bat-bob { animation: bat-bob 1.1s ease-in-out infinite alternate; }
+.bat-flap { animation: bat-flap 0.18s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+@keyframes bat-fly     { from { transform: translateX(-12vw); } to { transform: translateX(112vw); } }
+@keyframes bat-fly-rtl { from { transform: translateX(112vw); } to { transform: translateX(-12vw); } }
+@keyframes bat-bob  { to { translate: 0 14px; } }
+@keyframes bat-flap { to { transform: scaleX(0.3); } }
+@keyframes twinkle  { to { opacity: 0.15; } }
+
+/* 🎃 Embers instead of dits/dahs: small round glowing dots (title screen + calm background) */
+body[data-season="halloween"] .particle, body[data-season="halloween"] .amb-particle { border-radius: 50%; }
+body[data-season="halloween"] .p-layer.front .particle { width: 5px; height: 5px; background: #ffb35c; box-shadow: 0 0 10px #ff7a1a; }
+body[data-season="halloween"] .p-layer.back .particle { width: 9px; height: 9px; }
+body[data-season="halloween"] .amb-particle { width: 5px; height: 5px; }
+
+/* 🎃 Turbo orb = pumpkin (static; right/wrong keep their own colours) */
+body[data-season="halloween"] .turbo-orb:not(.right):not(.wrong) {
+  border-color: #3d6b1f;
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.14) 0 3px, transparent 3px 20%),
+    radial-gradient(circle at 50% 38%, #ff9a3d, #d9540b 68%, #7a2a04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars .twinkle { animation: none; }
+}
+
+/* 🎃 Season welcome box above PLAY (splash.js): fun-fact look, Yes closes, No shakes + laughs */
+.season-welcome {
+  position: relative;
+  z-index: 2;
+  width: min(86vw, 340px);
+  max-height: 320px;
+  padding: 12px 16px 14px;
+  text-align: center;
+  background: var(--fact-bg);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  animation: welcome-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.season-welcome p { margin: 0; }
+.season-welcome-icons { font-size: 1.6rem; letter-spacing: 0.3em; padding-left: 0.3em; }
+.season-welcome-text { margin-top: 4px !important; font-size: 0.95rem; line-height: 1.45; color: var(--text); }
+.season-welcome-actions { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+.season-welcome-actions button { min-width: 96px; }
+.season-welcome.laugh { animation: welcome-shake 0.5s ease; }
+.season-welcome.closing { overflow: hidden; animation: welcome-out 0.5s ease-in forwards; }
+.splash.leaving .season-welcome { transition: opacity 0.3s; opacity: 0; }
+@keyframes welcome-in { from { opacity: 0; transform: translateY(-16px); filter: blur(4px); } }
+@keyframes welcome-shake { 20%, 60% { transform: translateX(-6px) rotate(-1deg); } 40%, 80% { transform: translateX(6px) rotate(1deg); } }
+@keyframes welcome-out { to { opacity: 0; transform: scale(0.9); max-height: 0; padding-block: 0; margin-bottom: -28px; } }
+@media (prefers-reduced-motion: reduce) {
+  .season-welcome, .season-welcome.laugh { animation: none; }
+  .season-welcome.closing { animation-duration: 0.2s; }
+}
+
+/* 🧙 Witch (graphics/witch.svg, js/seasonScene.js): left → right at moon height, moonlit edge like the bats */
+.witch-layer { top: 0; bottom: 0; }
+.witch { position: absolute; top: 6%; left: 0; width: min(38vw, 190px); animation: witch-fly 14s linear forwards; }
+.witch img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 2px rgb(255 170 90 / 0.75)) drop-shadow(0 0 8px rgb(255 122 26 / 0.35));
+  animation: witch-bob 2.2s ease-in-out infinite alternate;
+}
+@keyframes witch-fly { from { transform: translateX(-45vw); } to { transform: translateX(110vw); } }
+@keyframes witch-bob { from { translate: 0 -6px; rotate: -2deg; } to { translate: 0 8px; rotate: 2deg; } }
+
+/* 🕷️ Halloween Turbo: spider's lair (js/turboLair.js). One fixed look for every session (no random hue). */
+body[data-season="halloween"].turbo-mode::before {
+  background:
+    radial-gradient(ellipse 120% 55% at 50% 112%, rgb(150 12 32 / 0.5), transparent 70%),
+    radial-gradient(ellipse 90% 45% at 50% 105%, rgb(80 20 100 / 0.55), transparent 75%),
+    linear-gradient(180deg, #050308, #0b0710 55%, #12070e);
+}
+.turbo-lair { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.cobweb { position: absolute; top: 0; width: min(42vw, 220px); opacity: 0.5; }
+.cobweb.left { left: 0; }
+.cobweb.right { right: 0; transform: scaleX(-1); }
+.cobweb svg { display: block; width: 100%; height: auto; }
+.cobweb path { fill: none; stroke: #d9d2e6; stroke-width: 0.8; }
+.lair-fog { position: absolute; left: 0; right: 0; bottom: 0; height: 28vh; background: linear-gradient(to top, rgb(190 180 210 / 0.12), transparent); }
+
+/* The spider: hidden above the screen, drops on its thread, swings, climbs back up (10 s, then a new spot) */
+.spider-hang {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-110%);
+  transform-origin: top center;
+  opacity: 0;
+  transition: opacity 0.25s;
+  animation: spider-dangle 17s ease-in-out 1.2s infinite; /* 10 s of dangling, then 7 s out of sight */
+  animation-play-state: paused;
+}
+.turbo-lair.spider-on .spider-hang { opacity: 1; animation-play-state: running; }
+.spider-thread { width: 1px; height: var(--drop, 24vh); background: linear-gradient(rgb(230 225 240 / 0.15), rgb(230 225 240 / 0.55)); }
+.spider { width: 50px; margin-top: -2px; }
+.spider svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 1.5px rgb(220 200 240 / 0.6)) drop-shadow(0 0 6px rgb(255 60 60 / 0.4)); }
+.spider .legs path { fill: none; stroke: #6a5480; stroke-width: 1.8; stroke-linecap: round; }
+.spider .body { fill: #3a2850; }
+.spider .eye { fill: #ff3b3b; }
+@keyframes spider-dangle {           /* the old 10 s movement squeezed into 0–59 %, then hidden until 100 % */
+  0%   { transform: translateY(-110%) rotate(0deg); }
+  10.6% { transform: translateY(0) rotate(0deg); }
+  17.6% { transform: translateY(0) rotate(7deg); }
+  24.7% { transform: translateY(0) rotate(-6deg); }
+  31.8% { transform: translateY(0) rotate(4deg); }
+  37.6% { transform: translateY(0) rotate(-2deg); }
+  42.4% { transform: translateY(0) rotate(0deg); }
+  58.8%, 100% { transform: translateY(-110%) rotate(0deg); }
+}
+
+/* Tombstone answer buttons (right/wrong keep their green/red) */
+body[data-season="halloween"] .turbo-option { border-radius: 48% 48% 10px 10px / 38% 38% 10px 10px; }
+body[data-season="halloween"] .turbo-option:not(.right):not(.wrong) {
+  color: #2a2233;
+  background: linear-gradient(180deg, #9a93a6, #6f687c);
+  border-color: #4a4356;
+}
+
+/* Blood-red timer bar, darker when time runs out */
+body[data-season="halloween"] #turbo-timer-bar { background: #b3122e; }
+body[data-season="halloween"] #turbo-timer-bar.low { background: #5e0a18; }
+
+/* 🦴 Halloween: bone-white Daily keyboard keys (static) */
+body[data-season="halloween"] .key {
+  color: #2b2233;
+  background: linear-gradient(180deg, #f1e9d6, #cbbfa4);
+  border-radius: 12px 12px 16px 16px;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+}
+
+/* 🕯️ Halloween: the PLAY ring flickers like candlelight (title screen only) */
+body[data-season="halloween"] .ring-morse { animation: candle-flicker 3.2s infinite; }
+@keyframes candle-flicker {
+  0%, 100% { opacity: 1;    filter: drop-shadow(0 0 5px var(--accent)); }
+  8%       { opacity: 0.82; filter: drop-shadow(0 0 3px var(--accent)); }
+  12%      { opacity: 1;    filter: drop-shadow(0 0 7px var(--accent)); }
+  40%      { opacity: 0.9;  filter: drop-shadow(0 0 4px var(--accent)); }
+  43%      { opacity: 0.7;  filter: drop-shadow(0 0 2px var(--accent)); }
+  47%      { opacity: 1;    filter: drop-shadow(0 0 8px var(--accent)); }
+  75%      { opacity: 0.88; filter: drop-shadow(0 0 4px var(--accent)); }
+}
+
+/* ⚡ Lightning: the sky behind the trees flashes twice */
+.season-scene .lightning { top: 0; bottom: 0; background: rgb(225 215 255); opacity: 0; }
+.season-scene .lightning.flash { animation: lightning 0.7s ease-out; }
+@keyframes lightning { 0% { opacity: 0; } 6% { opacity: 0.55; } 14% { opacity: 0.05; } 22% { opacity: 0.4; } 100% { opacity: 0; } }
+
+/* 👻 Ghost easter egg (instead of the shark during Halloween) */
+.shark.ghost { width: min(42vw, 210px); filter: drop-shadow(0 0 18px rgb(220 230 255 / 0.6)); }
+.shark.ghost path { fill: rgb(235 235 255 / 0.85); }
+.shark.ghost .ghost-eye { fill: #140f1f; }
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-season="halloween"] .ring-morse, .season-scene .lightning.flash { animation: none; }
+}
+
+/* ⚡ Lightning bolt (js/seasonScene.js): drawn top → down in a blink, flickers with the flash, fades. Behind the trees. */
+.bolt-layer { top: 0; bottom: 0; }
+.bolt { position: absolute; top: 0; height: 62%; width: 140px; transform: translateX(-50%); opacity: 0; animation: bolt-strike 0.8s ease-out forwards; }
+.bolt svg {
+  overflow: visible;
+  filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 12px rgb(200 180 255 / 0.9));
+  clip-path: inset(-20px -60px 100% -60px);        /* revealed top → down (room for the glow at the sides) */
+  animation: bolt-draw 0.08s linear forwards;
+}
+.bolt path { fill: none; stroke: #f7f3ff; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+@keyframes bolt-draw { to { clip-path: inset(-20px -60px -20px -60px); } }
+@keyframes bolt-strike { 0% { opacity: 1; } 12% { opacity: 0.25; } 22% { opacity: 1; } 45% { opacity: 0.6; } 100% { opacity: 0; } }
+
+/* 🌩️ Thunder: the whole scene trembles a little */
+.season-scene.rumble { animation: rumble 0.8s ease-out; }
+@keyframes rumble {
+  10%, 50% { transform: translate(-2px, 1px); }
+  20%, 60% { transform: translate(2px, -1px); }
+  30%, 70% { transform: translate(-1px, -1px); }
+  40%, 80% { transform: translate(1px, 1px); }
+}
+
+/* 🎃 Premiere countdown above PLAY (splash.js), on the day a season opens */
+.season-countdown { position: relative; z-index: 1; margin: 0; text-align: center; font-size: 0.85rem; letter-spacing: 0.04em; color: var(--muted); pointer-events: none; }
+.season-countdown b { font-family: var(--mono); font-weight: 600; color: var(--accent); }

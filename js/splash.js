@@ -1,9 +1,12 @@
 // Title screen: "PLAY" inside a ring that spells PLAY in Morse, as dots and dashes.
 import { MORSE, primeAudio } from './morse.js';
-import { playSfx, playPitched } from './sfx.js';
+import { playSfx, playPitched, startThemeSong, stopThemeSong } from './sfx.js';
 import { loadPlayer } from './player.js';
 import { nextFact } from './facts.js';
 import { getMode, setGameMode } from './mode.js';
+import { getSeason, getUpcomingSeason } from './season.js';
+import { formatCountdown } from './game.js';
+import { addSeasonScene, summonWitch } from './seasonScene.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -114,7 +117,7 @@ function shineFrom(x, y) {
 
 // ---------- Easter egg: tap like crazy and a shark swims by ----------
 
-const SHARK_TAPS = 15;          // this many taps…
+const SHARK_TAPS = 8;           // this many taps…
 const SHARK_WINDOW_MS = 6000;   // …within this time
 const SHARK_COOLDOWN_MS = 60000;
 const SHARK_SWIM_MS = 7000;   // = the length of sounds/shark.mp3
@@ -132,6 +135,14 @@ const SHARK_SVG = `
   <path class="shark-body" d="M38 37 C55 30 75 26 96 24 Q104 15 106 2 L107 1 Q114 13 126 22
     C150 21 175 25 190 32 Q199 36 196 39 C188 44 175 46 160 46 L146 47 Q140 57 128 67
     Q128 57 124 50 C100 53 70 49 50 44 L38 42 Z" />
+</svg>`;
+
+// 🎃 Halloween: a ghost instead of the shark. Sheet with a wavy hem, two eyes and an "oo" mouth.
+const GHOST_SVG = `
+<svg viewBox="0 0 120 140" aria-hidden="true">
+  <path d="M60 6 C30 6 14 30 14 62 L14 124 Q22 112 30 124 Q38 136 46 124 Q53 112 60 124 Q67 136 74 124 Q82 112 90 124 Q98 136 106 124 L106 62 C106 30 90 6 60 6 Z" />
+  <ellipse class="ghost-eye" cx="45" cy="56" rx="7" ry="10" /><ellipse class="ghost-eye" cx="75" cy="56" rx="7" ry="10" />
+  <ellipse class="ghost-eye" cx="60" cy="86" rx="8" ry="11" />
 </svg>`;
 
 function countTap() {
@@ -160,13 +171,14 @@ function drainColors() {
 function shark() {
   const fromRight = Math.random() < 0.5;
   const el = document.createElement('div');
-  el.className = `shark${fromRight ? ' rtl' : ''}`;
-  el.style.top = `${25 + Math.random() * 40}%`;
+  const ghost = getSeason() === 'halloween'; // 🎃 a ghost floats by instead
+  el.className = `shark${ghost ? ' ghost' : ''}${fromRight ? ' rtl' : ''}`;
+  el.style.top = ghost ? `${8 + Math.random() * 30}%` : `${25 + Math.random() * 40}%`;
   el.style.animationDuration = `${SHARK_SWIM_MS}ms`;
-  el.innerHTML = `<div class="shark-bob">${SHARK_SVG}</div>`;
+  el.innerHTML = `<div class="shark-bob">${ghost ? GHOST_SVG : SHARK_SVG}</div>`;
   el.addEventListener('animationend', (e) => { if (e.target === el) el.remove(); });
   $('particles-back').append(el); // deep layer: behind the ring, same slow parallax
-  playSfx('shark');
+  playSfx(ghost ? 'ghost' : 'shark');
   drainColors();
 
   // Dits and dahs near the shark get pushed out of its way.
@@ -236,6 +248,73 @@ function poof(card) {
   setTimeout(() => { card.remove(); factShowing = false; }, POOF_MS);
 }
 
+// ---------- 🎃 Season welcome box above PLAY: Yes closes it, No laughs at you ----------
+
+const SEASON_WELCOME = {
+  halloween: { icons: '🎃 🦇 🎃', text: 'Welcome to the Halloween edition! Do you dare to enter?' },
+};
+const WELCOME_KEY = 'morse-web:season-welcome'; // sessionStorage: answered Yes during this visit
+const CLOSE_MS = 500;
+
+function seasonWelcome() {
+  const w = SEASON_WELCOME[getSeason()];
+  try { if (!w || sessionStorage.getItem(WELCOME_KEY)) return; } catch {}
+  if (!w) return;
+  const card = document.createElement('div');
+  card.className = 'season-welcome';
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-label', w.text);
+  card.innerHTML = `<p class="season-welcome-icons" aria-hidden="true">${w.icons}</p><p class="season-welcome-text"></p>
+    <div class="season-welcome-actions">
+      <button type="button" data-answer="yes">Yes</button>
+      <button type="button" class="secondary" data-answer="no">No</button>
+    </div>`;
+  card.querySelector('.season-welcome-text').textContent = w.text;
+  card.addEventListener('click', (e) => {
+    const answer = e.target.closest('[data-answer]')?.dataset.answer;
+    if (answer === 'yes') {
+      try { sessionStorage.setItem(WELCOME_KEY, 'yes'); } catch {}
+      startThemeSong(); // counts as the first tap
+      card.classList.add('closing');
+      setTimeout(() => card.remove(), CLOSE_MS);
+    } else if (answer === 'no') {
+      playSfx('evilLaugh');
+      card.classList.remove('laugh');
+      void card.offsetWidth; // restart the shake
+      card.classList.add('laugh');
+    }
+  });
+  $('splash').insertBefore(card, $('splash-play'));
+}
+
+// ---------- 🎃 Premiere countdown above PLAY (the day a season starts, before its startsAt) ----------
+
+const PREMIERE_TEXT = { halloween: '🎃 The Halloween edition opens in' };
+
+// Returns a stop function. At zero, a player still on the title screen gets the season right away (reload);
+// anyone already playing isn't interrupted and gets it the next time they open the game.
+function premiereCountdown() {
+  const s = getUpcomingSeason();
+  if (!s) return () => {};
+  const line = document.createElement('p');
+  line.className = 'season-countdown';
+  line.innerHTML = `${PREMIERE_TEXT[s.id] ?? 'A new season opens in'} <b></b>`;
+  $('splash').insertBefore(line, $('splash-play'));
+  const start = Date.parse(s.startsAt);
+  const tick = () => {
+    const left = start - Date.now();
+    if (left <= 0) {
+      clearInterval(id);
+      if (!$('splash').classList.contains('leaving')) location.reload();
+      return;
+    }
+    line.querySelector('b').textContent = formatCountdown(left);
+  };
+  const id = setInterval(tick, 1000);
+  tick();
+  return () => { clearInterval(id); line.remove(); };
+}
+
 // ---------- Floating dits and dahs ----------
 
 const AMBIENT = 8;          // always drifting
@@ -279,6 +358,7 @@ function paintModePick() {
 }
 
 function pickMode(mode) {
+  startThemeSong(); // 🎃 first tap on the title screen starts the season's song (if any)
   if (mode === getMode()) return;
   setGameMode(mode); // also switches the cute Easy look on/off
   paintModePick();
@@ -291,9 +371,15 @@ function pickMode(mode) {
 export function runSplash() {
   buildRing();
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 🎃 Seasonal scenery (forest, moon, bats); stopped below when PLAY is tapped.
+  const stopScene = getSeason() === 'halloween' ? addSeasonScene({ calm }) : () => {};
+  seasonWelcome(); // 🎃 "Do you dare to enter?" (once per visit, only during a season)
+  const stopCountdown = premiereCountdown(); // 🎃 before a season's premiere: "opens in 00:59:12"
 
   const onTap = (e) => {
-    if (e.target.closest('#splash-play, .splash-mode')) return; // PLAY starts the game, the toggle picks Easy/Normal
+    if (e.target.closest('#splash-play, .splash-mode, .season-welcome')) return; // PLAY starts the game, the toggle picks Easy/Normal
+    startThemeSong(); // 🎃 first tap starts the season's song (if any); later taps do nothing
+    summonWitch();    // 🧙 Halloween: a tap sends the witch across the moon (one at a time)
     playPitched('tap'); // one sound per tap (not per ripple ring), random pitch each time
     if (!calm) countTap(); // easter egg
     countBurst();          // 5 taps + pause = a fun Morse fact
@@ -318,11 +404,14 @@ export function runSplash() {
 
   return new Promise((resolve) => {
     $('splash-play').addEventListener('click', () => {
+      stopThemeSong(); // fades out with the title screen's exit animation
       playSfx('enter', loadPlayer()?.name); // VIP players get their own sound (see sfx.js)
       primeAudio(); // the tap counts as permission to play sound: unlock the Morse audio now
       $('splash').classList.add('leaving');
       // Title screen is done: stop everything it runs in the background.
       clearInterval(ambientId);
+      stopScene(); // no new bats
+      stopCountdown();
       $('splash').removeEventListener('pointerdown', onTap);
       $('pick-easy').removeEventListener('click', onPickEasy);   // mode is fixed for this session
       $('pick-normal').removeEventListener('click', onPickNormal);
