@@ -106,7 +106,29 @@ end;
 $$;
 revoke execute on function public._new_session(uuid) from public, anon, authenticated;
 
--- New player. Returns a session token, or raises NAME_TAKEN / INVALID_NAME / INVALID_PASSWORD.
+-- 🚫 Callsigns nobody may register (migration 022). Exact matches only: callsigns are 1–4 characters,
+-- and partial matching would block ordinary names like BASS or PASS. Add words to the array to block more.
+create or replace function public._is_bad_name(p_name text)
+returns boolean
+language sql immutable
+set search_path = ''
+as $$
+  select upper(coalesce(p_name, '')) = any (array[
+    -- English: sexual, insults, slurs
+    'ANAL', 'ANUS', 'ARSE', 'ASS', 'ASSH', 'BOOB', 'BICH', 'BTCH', 'COCK', 'COON', 'CUM', 'CUMS', 'CUNT',
+    'DICK', 'DIKE', 'DYKE', 'FAG', 'FAGS', 'FAGG', 'FCK', 'FCUK', 'FUCK', 'FUK', 'FUKK', 'GAY', 'GAYS',
+    'HOE', 'HOES', 'HOMO', 'JIZZ', 'KIKE', 'KKK', 'NAZI', 'NIG', 'NIGA', 'NIGG', 'NEGR', 'PEDO', 'PENI',
+    'PISS', 'PORN', 'PUSS', 'RAPE', 'SEX', 'SEXY', 'SHIT', 'SLUT', 'SPIC', 'TIT', 'TITS', 'TWAT', 'WANK', 'WHOR',
+    'HITL', 'SS88', '1488',
+    -- Swedish
+    'KUK', 'FITT', 'FITA', 'HORA', 'KNUL', 'BOGE',
+    -- leet spellings
+    'A55', '455', 'AN4L', '4NAL', '5EX', 'S3X', 'SH1T', 'D1CK', 'C0CK', 'F4G', 'G4Y', 'N1G', 'N1GG', 'T1TS', 'FVCK', 'KUNT'
+  ])
+$$;
+revoke execute on function public._is_bad_name(text) from public, anon, authenticated;
+
+-- New player. Returns a session token, or raises BAD_NAME / NAME_TAKEN / INVALID_NAME / INVALID_PASSWORD.
 create or replace function public.register(p_name text, p_password text)
 returns text
 language plpgsql security definer
@@ -115,6 +137,9 @@ as $$
 declare
   v_id uuid;
 begin
+  if public._is_bad_name(p_name) then
+    raise exception 'BAD_NAME';
+  end if;
   if p_password is null or p_password !~ '^[.-]{4}$' then
     raise exception 'INVALID_PASSWORD';
   end if;

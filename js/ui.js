@@ -111,6 +111,7 @@ function flash(el) {
 const ERRORS = {
   NAME_TAKEN: 'That callsign is taken. If it’s yours, use Log in.',
   INVALID_NAME: 'Use 1–4 letters or digits.',
+  BAD_NAME: 'That callsign isn’t allowed. Please pick another one.',
   INVALID_PASSWORD: 'Tap • dit and — dah 4 times to make your password.',
   BAD_LOGIN: 'Wrong callsign or password.',
 };

@@ -362,6 +362,11 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Admin page `…/sugg/` (live: https://pikksel.github.io/morse-app/sugg/): log in as DAW1 in the game first, same browser. Others see "Nothing to see here 🙂". Player text shown with textContent (no HTML runs) (`sugg/index.html`, `js/suggList.js`)
 - [ ] User: send a real suggestion as DAW1, check it on `/sugg/`, then commit + push
 
+### 4.30 🚫 Bad-name filter (2026-10-29)
+- [x] Deleted players ANAL and GAY (with their scores, badges, sessions, 1 suggestion) on request
+- [x] DB migration 022: `_is_bad_name()` (exact-match blocklist: English, Swedish, leet; private) + `register()` raises `BAD_NAME` for those. Tested in a rolled-back transaction (gay/Anal/G4Y/FUCK/KUK refused; BASS/PASS allowed). Message in ui.js `ERRORS.BAD_NAME`. schema.sql updated
+- [x] Existing player BICH matches the list but is a VIP: kept (the filter only checks new registrations, so BICH can still log in)
+
 ### 4.29 🎃 Seasons + Halloween theme (2026-10-26)
 - [x] **Premiere tonight: 26 Oct 21:15 Swedish time** (`startsAt` in season.js; season now 10-26 – 11-01). Before it the title screen shows "🎃 The Halloween edition opens in 01:00:00" above PLAY; at zero, players on the title screen reload into Halloween (players mid-game get it next time). Tested with a 1-minute premiere. ⚠️ User must push before 21:15. Spooky Connection badge = played anything on **27–31 Oct** (migration 021 replaces 020's premiere-night rule; applied + schema.sql + tested: 26 Oct night and 1 Nov don't count)
 Plan: Halloween Oct 27 – Nov 1 (Swedish days), level B + scary sounds, always dark, Easy keeps its shapes/font. No animations or extra sounds while playing. Christmas later reuses the seasons system (+ the forest, with snow).
