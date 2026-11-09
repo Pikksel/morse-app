@@ -1,7 +1,7 @@
 // Pure game logic: daily word, tries, guess evaluation, saved state. No DOM here.
 //
 // Rules (inspired by morsle.fun):
-// - 25 tries. Each Play costs one try and grants one guess (a blind Guess costs a try too).
+// - 25 tries = 25 guesses. Listening is free, but limited per speed (LISTENS_PER_SPEED).
 // - Speed starts at 35 WPM and drops 5 WPM every 4 tries, down to 10 (35 ×4, 30 ×4 ... 15 ×4, 10 ×5).
 // - Blanks are allowed. Correct letters turn green; no other hints.
 // - Normal: 5 random letters (not a word) since RANDOM_FROM. 🐣 Easy: a real word,
@@ -128,11 +128,28 @@ export function wpmForTry(tryNumber) {
   return Math.max(min, start - step * Math.floor((tryNumber - 1) / TRIES_PER_SPEED));
 }
 
+// Free listens at each speed (only a Guess uses a try). A new speed brings fresh listens.
+export const LISTENS_PER_SPEED = { normal: 5, easy: 8 };
+
+// Listens left at the speed of the next guess.
+export function listensLeft(state) {
+  return LISTENS_PER_SPEED[getMode()] - (state.listens?.[wpmForTry(state.tries + 1)] ?? 0);
+}
+
+// Uses a listen. Returns the WPM to play at, or null if none are left at this speed.
+export function useListen(state) {
+  if (state.status !== 'playing' || state.tries >= MAX_TRIES || listensLeft(state) <= 0) return null;
+  const wpm = wpmForTry(state.tries + 1);
+  state.listens = { ...state.listens, [wpm]: (state.listens?.[wpm] ?? 0) + 1 };
+  if (!state.startedAt) state.startedAt = Date.now();
+  saveState(state);
+  return wpm;
+}
+
 // 🐣 Easy: the word's Morse appears once 5 tries are used up.
 export const HINT_AFTER = 5;
 export function showsHint(state) {
-  return getMode() === 'easy' && state.status === 'playing'
-    && (state.tries > HINT_AFTER || (state.tries === HINT_AFTER && !state.canGuess));
+  return getMode() === 'easy' && state.status === 'playing' && state.tries >= HINT_AFTER;
 }
 
 // true per position where the letter is right.
@@ -157,8 +174,8 @@ function newState(day, owner) {
     day,
     owner,             // callsign this game belongs to
     mode: getMode(),   // 'normal' | 'easy'
-    tries: 0,          // plays used
-    canGuess: false,   // one guess per play
+    tries: 0,          // guesses used
+    listens: {},       // listens used per speed: { 35: 2, 30: 1, … }
     guesses: [],       // { word, tryNumber }; word uses BLANK for empty squares
     status: 'playing', // 'playing' | 'won' | 'lost'
     startedAt: null,
@@ -186,21 +203,12 @@ export function saveState(state) {
   } catch {}
 }
 
-// Uses a try. Returns the WPM to play at, or null if no tries are left.
-export function useTry(state) {
-  if (state.status !== 'playing' || state.tries >= MAX_TRIES) return null;
-  state.tries++;
-  state.canGuess = true;
-  if (!state.startedAt) state.startedAt = Date.now();
-  saveState(state);
-  return wpmForTry(state.tries);
-}
-
-// Records the one guess for the current try. Returns the evaluation.
+// A guess uses a try. Returns the evaluation.
 export function addGuess(state, word) {
   const answer = dailyWord(state.day);
+  state.tries++;
+  if (!state.startedAt) state.startedAt = Date.now();
   state.guesses.push({ word, tryNumber: state.tries });
-  state.canGuess = false;
 
   if (word === answer) state.status = 'won';
   else if (state.tries >= MAX_TRIES) state.status = 'lost';

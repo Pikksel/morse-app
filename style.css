@@ -1597,3 +1597,23 @@ body[data-season="halloween"] .ring-morse { animation: candle-flicker 3.2s infin
 /* 🎃 Premiere countdown above PLAY (splash.js), on the day a season opens */
 .season-countdown { position: relative; z-index: 1; margin: 0; text-align: center; font-size: 0.85rem; letter-spacing: 0.04em; color: var(--muted); pointer-events: none; }
 .season-countdown b { font-family: var(--mono); font-weight: 600; color: var(--accent); }
+
+/* 🛠️ Dev updates in the welcome box (index.html: <li class="dev-update">) */
+.dev-title { margin: 14px 0 0; font-size: 0.95rem; font-family: var(--display); color: var(--accent); }
+.dev-update { display: grid; grid-template-columns: 1.6em 1fr; gap: 4px; align-items: start; }
+.dev-update p { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+.dev-date { margin-left: 6px; font-size: 0.75rem; color: var(--muted); }
+
+/* Welcome box = an overlay on top of the game (the board stays in place) until "Got it!" or ✕ (js/welcome.js) */
+.welcome:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  width: min(100% - 32px, 440px);
+  height: fit-content;
+  max-height: 88dvh;
+  margin: auto;
+  overflow-y: auto;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.7), 0 12px 40px rgb(0 0 0 / 0.5); /* dims everything behind it */
+}
+body.welcome-open main > :not(#welcome) { pointer-events: none; } /* no taps on the game behind it */

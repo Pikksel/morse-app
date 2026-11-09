@@ -1,7 +1,7 @@
 // Game screen: 5 squares, tries meter, Play button, guess history, keyboard.
 import {
   WORD_LENGTH, MAX_TRIES, BLANK, dailyWord, wpmForTry, evaluate, knownLetters,
-  loadState, saveState, useTry, addGuess, elapsedMs, formatTime, pauseTimer, resumeTimer,
+  loadState, saveState, useListen, listensLeft, addGuess, elapsedMs, formatTime, pauseTimer, resumeTimer,
   showsHint, HINT_AFTER, isWeekendBreak, nextDailyAt, formatCountdown,
 } from './game.js';
 import { MORSE, play, stop, tone } from './morse.js';
@@ -108,26 +108,28 @@ function paintSquares(animate = false) {
 }
 
 function paintStatus() {
-  const t = state.tries;
-  $('try-count').textContent = `Try ${t}/${MAX_TRIES}`;
-  $('try-wpm').textContent = t ? `${wpmForTry(t)} WPM` : '';
+  const t = state.tries; // guesses made
+  const shown = state.status === 'playing' ? Math.min(t + 1, MAX_TRIES) : t; // while playing: the try you're on
+  $('try-count').textContent = `Try ${shown}/${MAX_TRIES}`;
+  $('try-wpm').textContent = shown ? `${wpmForTry(shown)} WPM` : '';
   [...$('meter').children].forEach((dot, i) => {
     dot.classList.toggle('used', i < t);
-    dot.classList.toggle('current', i === t - 1 && state.status === 'playing');
+    dot.classList.toggle('current', i === shown - 1 && state.status === 'playing');
   });
 }
 
-// While this try's sound plays (and its guess is unused) the button waits.
-// After guessing, Play always starts the next try.
+// Listen button: free listens left at the current speed. It waits while the word plays.
 function paintPlayButton() {
   const btn = $('play');
   const done = state.status !== 'playing' || state.tries >= MAX_TRIES;
-  const busy = playing && state.canGuess;
-  btn.disabled = done || busy;
-  if (busy) btn.innerHTML = '♪ Playing…';
+  const left = listensLeft(state);
+  const wpm = wpmForTry(Math.min(state.tries + 1, MAX_TRIES));
+  btn.disabled = done || playing || left <= 0;
+  if (playing) btn.innerHTML = '♪ Playing…';
   else if (state.status === 'won') btn.innerHTML = 'Solved!';
   else if (done) btn.innerHTML = 'No tries left';
-  else btn.innerHTML = `▶ Play <small>${wpmForTry(state.tries + 1)} WPM</small>`;
+  else if (left <= 0) btn.innerHTML = `🎧 No listens left <small>${wpm} WPM</small>`;
+  else btn.innerHTML = `▶ Listen <small>${wpm} WPM · ${left} left</small>`;
 }
 
 function paintHistory() {
@@ -217,8 +219,8 @@ function resetInput() {
 const notifyState = () => document.dispatchEvent(new Event('morse:state'));
 
 function onPlayClick() {
-  if (playing && state.canGuess) return;
-  const wpm = useTry(state);
+  if (playing) return;
+  const wpm = useListen(state); // free, but limited per speed
   if (wpm === null) return;
   notifyState();
   stop(); // cut off the previous try's sound
@@ -245,9 +247,9 @@ function setSounding(i) {
 // ---------- Input ----------
 
 // Typing is open from the first Play until the game ends.
-// A Guess without a fresh Play costs a try (see submit).
+// Every Guess uses a try; listening doesn't (see useListen in game.js).
 function canType() {
-  return state.status === 'playing' && state.tries > 0;
+  return state.status === 'playing' && !!state.startedAt;
 }
 
 // Next / previous square that isn't locked, or -1.
@@ -309,9 +311,8 @@ function submit() {
     return;
   }
 
-  // This try's guess is used up: guessing again blind costs the next try.
-  if (!state.canGuess) {
-    if (useTry(state) === null) return;
+  // Guessing while the word still plays: stop the sound. (The guess itself uses the try, in addGuess.)
+  if (playing) {
     stop();
     playing = false;
     sounding = -1;
@@ -327,7 +328,7 @@ function submit() {
 
   const correct = result.filter(Boolean).length;
   if (showsHint(state) && state.tries === HINT_AFTER) message('🐣 Hint unlocked: one letter in Morse is under the squares!');
-  else message(`${correct}/${WORD_LENGTH} correct. Play to listen, or edit and Guess (try ${state.tries + 1}).`);
+  else message(`${correct}/${WORD_LENGTH} correct. Listen again, or edit and Guess (try ${state.tries + 1}).`);
 }
 
 // restored = true when reopening an already finished game (don't re-submit).
@@ -419,7 +420,7 @@ function wireEvents() {
 export const currentState = () => state;
 
 // A word in progress: started (first Play) and not finished yet.
-export const isDailyInProgress = () => !!state && state.status === 'playing' && state.tries > 0;
+export const isDailyInProgress = () => !!state && state.status === 'playing' && !!state.startedAt;
 
 // owner: the logged-in callsign (each callsign has its own saved game).
 export function initGame({ owner, onFinish } = {}) {
@@ -457,7 +458,6 @@ export function initGame({ owner, onFinish } = {}) {
   if (state.status !== 'playing') return finish(true);
 
   paintAll();
-  if (state.tries === 0) message('Press Play to hear today’s word.');
-  else if (state.canGuess) message('Type your guess, then press Guess.');
-  else message(`Play to listen, or edit and Guess (try ${state.tries + 1}).`);
+  if (!state.startedAt) message('Press Listen to hear today’s word.');
+  else message(`Listen again, or type your guess and press Guess (try ${state.tries + 1}).`);
 }

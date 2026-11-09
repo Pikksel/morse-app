@@ -362,6 +362,17 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Admin page `…/sugg/` (live: https://pikksel.github.io/morse-app/sugg/): log in as DAW1 in the game first, same browser. Others see "Nothing to see here 🙂". Player text shown with textContent (no HTML runs) (`sugg/index.html`, `js/suggList.js`)
 - [ ] User: send a real suggestion as DAW1, check it on `/sugg/`, then commit + push
 
+### 4.32 🛠️ Dev updates in the welcome box (2026-11-09)
+- [x] Styles for `<li class="dev-update">` blocks (+ optional `<h3 class="dev-title">`) at the end of style.css; the user writes the updates in index.html
+- [x] welcome.js `UPDATES_VERSION` (date): the welcome box shows once more for everyone when it's bumped. Tested: an old "seen" mark shows the box again; after closing it stays closed
+- How to post an update: add an `<li class="dev-update">` in index.html + set `UPDATES_VERSION` to today's date
+- [x] Welcome box is an overlay now (centred, everything behind dimmed): the board no longer gets pushed down. Game taps and keys are blocked until "Got it!" / ✕ / Esc (body class `welcome-open` + key capture in welcome.js). Tested: board stays at the same spot, a key behind it types nothing
+
+### 4.31 🎧 Listening doesn't cost a try (2026-11-09, from HUEE's suggestion)
+- [x] A try = a Guess (25). Listening is free but limited per speed: Normal 5, 🐣 Easy 8 (`LISTENS_PER_SPEED`, `useListen`, `listensLeft` in game.js; `useTry`/`canGuess` removed). Each new speed (every 4 tries) brings fresh listens. Button: "▶ Listen 35 WPM · 4 left" / "🎧 No listens left". Status shows the try you're on. Score + badges unchanged in meaning (no DB change). Easy hint after 5 guesses
+- [x] Tested: game.js rules simulated (Normal + Easy, speed change, hint, loss = 26) and the real Daily screen in the pane
+- [ ] User: push before midnight so tomorrow's Daily starts on the new rule (a game in progress keeps its tries)
+
 ### 4.30 🚫 Bad-name filter (2026-10-29)
 - [x] Deleted players ANAL and GAY (with their scores, badges, sessions, 1 suggestion) on request
 - [x] DB migration 022: `_is_bad_name()` (exact-match blocklist: English, Swedish, leet; private) + `register()` raises `BAD_NAME` for those. Tested in a rolled-back transaction (gay/Anal/G4Y/FUCK/KUK refused; BASS/PASS allowed). Message in ui.js `ERRORS.BAD_NAME`. schema.sql updated
