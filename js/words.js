@@ -27,3 +27,22 @@ export const ANSWERS = [
   'FERRY', 'GECKO', 'HYENA', 'INNER', 'LINEN', 'MOOSE', 'NACHO', 'OPTIC', 'PASTA', 'RUGBY',
   'SHARK', 'TWIST', 'UNION', 'VENUS', 'WHEEL', 'BISON', 'COMET', 'DONOR', 'EMBER', 'FORTY',
 ];
+
+
+// 🧠 Normal Daily from HARD_FROM (game.js): hard words instead of random letters. Rare / long Morse letters
+// (J Q X Y Z V K), odd patterns, words people don't guess quickly. None of them are in ANSWERS (Easy).
+// Order is deliberately mixed. Add words at the END only: the daily pick is based on list position.
+export const HARD_WORDS = [
+  'WHIFF', 'VOUCH', 'WOOZY', 'COMFY', 'CHIVE', 'KNOLL', 'FUZZY', 'WRYLY', 'REVUE', 'KHAKI',
+  'EXTOL', 'PROXY', 'USURP', 'VIXEN', 'HAIKU', 'VAPID', 'AZURE', 'LLAMA', 'ZESTY', 'JAZZY',
+  'OKAPI', 'OZONE', 'DECOY', 'ENVOY', 'POLKA', 'NYMPH', 'SHYLY', 'SKIFF', 'YOKEL', 'SQUID',
+  'CIVIC', 'GAFFE', 'SQUAB', 'OXIDE', 'TABOO', 'FOYER', 'FIZZY', 'JUROR', 'XENON', 'VODKA',
+  'AFFIX', 'TOXIC', 'BANJO', 'PIZZA', 'WHELK', 'BUXOM', 'SQUAD', 'JUMPY', 'PIQUE', 'GAWKY',
+  'BIJOU', 'RAZOR', 'BOOZY', 'JIVED', 'MYRRH', 'EPOXY', 'GLYPH', 'DIZZY', 'TOPAZ', 'PSYCH',
+  'BOXER', 'EXULT', 'QUALM', 'CYNIC', 'QUIRK', 'DUCHY', 'KUDZU', 'QUAFF', 'PIXEL', 'ABYSS',
+  'FLUKY', 'KIOSK', 'HAVOC', 'JERKY', 'LYMPH', 'JIFFY', 'HUSKY', 'YUCCA', 'HAZEL', 'WALTZ',
+  'SQUIB', 'JOUST', 'BAYOU', 'ZILCH', 'FRIZZ', 'ZIPPY', 'PYGMY', 'JUDGE', 'GLAZE', 'KEBAB',
+  'JOWLS', 'QUART', 'AXIOM', 'QUOTA', 'VEXED', 'KAZOO', 'CHIMP', 'NEXUS', 'KNACK', 'GAUZE',
+  'WACKY', 'QUIPS', 'TAWNY', 'MOXIE', 'VYING', 'BLITZ', 'JAUNT', 'GUAVA', 'GIZMO', 'TRYST',
+  'BEVEL', 'FJORD', 'SQUAT', 'DOGMA', 'EBONY', 'QUEUE', 'VOGUE', 'QUACK', 'QUILL', 'QUASH',
+];

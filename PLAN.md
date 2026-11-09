@@ -362,6 +362,10 @@ Score = tries used (1–25), 26 = failed; tie-break on time.
 - [x] Admin page `…/sugg/` (live: https://pikksel.github.io/morse-app/sugg/): log in as DAW1 in the game first, same browser. Others see "Nothing to see here 🙂". Player text shown with textContent (no HTML runs) (`sugg/index.html`, `js/suggList.js`)
 - [ ] User: send a real suggestion as DAW1, check it on `/sugg/`, then commit + push
 
+### 4.33 🧠 Normal Daily = hard words (2026-11-09, from HUEE's suggestions)
+- [x] From **Tue 10 Nov** Normal uses `HARD_WORDS` (words.js, 120 words: rare/long Morse letters J Q X Y Z V K, odd patterns; none shared with Easy's ANSWERS) instead of random letters; one per calendar day in list order (`HARD_FROM` in game.js). Today (9 Nov) keeps its letters. Tested: 10 Nov WHIFF, 11 VOUCH, 12 WOOZY, 13 COMFY; 120 different words before it repeats (~4 months, weekends use up a position too); Halloween days unchanged
+- Add more words at the END of HARD_WORDS only (the pick is by position)
+
 ### 4.32 🛠️ Dev updates in the welcome box (2026-11-09)
 - [x] Styles for `<li class="dev-update">` blocks (+ optional `<h3 class="dev-title">`) at the end of style.css; the user writes the updates in index.html
 - [x] welcome.js `UPDATES_VERSION` (date): the welcome box shows once more for everyone when it's bumped. Tested: an old "seen" mark shows the box again; after closing it stays closed

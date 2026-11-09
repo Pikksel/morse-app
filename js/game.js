@@ -4,9 +4,9 @@
 // - 25 tries = 25 guesses. Listening is free, but limited per speed (LISTENS_PER_SPEED).
 // - Speed starts at 35 WPM and drops 5 WPM every 4 tries, down to 10 (35 ×4, 30 ×4 ... 15 ×4, 10 ×5).
 // - Blanks are allowed. Correct letters turn green; no other hints.
-// - Normal: 5 random letters (not a word) since RANDOM_FROM. 🐣 Easy: a real word,
+// - Normal: 5 random letters (not a word) since RANDOM_FROM, a hard word since HARD_FROM. 🐣 Easy: a real word,
 //   slower speeds (20 → 5 WPM) and the word's Morse as a hint after 5 tries.
-import { ANSWERS } from './words.js';
+import { ANSWERS, HARD_WORDS } from './words.js';
 import { getMode } from './mode.js';
 
 export const WORD_LENGTH = 5;
@@ -44,6 +44,8 @@ function swedishMidnight(dayKey) {
 
 // Normal switched from words to random letters on this day (earlier days keep their word).
 const RANDOM_FROM = '2026-10-17';
+// 🧠 …and from random letters to hard words (words.js HARD_WORDS) on this day: one word per day, in list order.
+const HARD_FROM = '2026-11-10';
 
 // 5 letters A–Z from a random generator seeded with the day: the same for everyone, new every day.
 function randomLetters(dayNumber) {
@@ -80,6 +82,10 @@ export function dailyWord(dayKey = todayKey(), mode = getMode()) {
   const days = Math.floor((Date.parse(dayKey) - EPOCH) / DAY_MS);
   const special = SPECIAL_WORDS[mode === 'easy' ? 'easy' : 'normal'][dayKey];
   if (special) return special;
+  if (mode !== 'easy' && dayKey >= HARD_FROM) {
+    const n = Math.floor((Date.parse(dayKey) - Date.parse(HARD_FROM)) / DAY_MS);
+    return HARD_WORDS[n % HARD_WORDS.length];
+  }
   if (mode !== 'easy' && dayKey >= RANDOM_FROM) return randomLetters(days);
   // Words: Easy uses the same list half a list further on, so it never matches an old Normal day.
   const dayNumber = days + (mode === 'easy' ? Math.floor(ANSWERS.length / 2) : 0);
